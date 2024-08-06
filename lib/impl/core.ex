@@ -48,6 +48,7 @@ defmodule PipeLine.Impl.Core do
   """
   use Nostrum.Consumer
   require Logger
+  alias PipeLine.Impl.Cache
   alias PipeLine.Impl.Ping
   alias PipeLine.Impl.Registration
   alias PipeLine.Impl.Clist
@@ -62,6 +63,9 @@ defmodule PipeLine.Impl.Core do
 
       ">! clist" ->
         Clist.send_list(msg)
+
+      ">! cached?" -> 
+        Cache.cached?(msg)
 
       _ ->
         :noop
