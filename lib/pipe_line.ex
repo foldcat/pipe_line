@@ -9,8 +9,9 @@ defmodule PipeLine do
     Logger.info("starting")
 
     children = [
+      PipeLine.Database.Repo,
       PipeLine.Impl.Core,
-      PipeLine.Database.Repo
+      PipeLine.Impl.Init
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)

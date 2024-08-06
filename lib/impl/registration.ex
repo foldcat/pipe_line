@@ -49,6 +49,7 @@ defmodule PipeLine.Impl.Registration do
              channel_id: Integer.to_string(channel_id)
            }) do
         {:ok, _} ->
+          :ets.insert(:chan_cache, {Integer.to_string(channel_id)})
           Api.create_message(channel_id, "registered!")
           log_registration(msg, true)
 
