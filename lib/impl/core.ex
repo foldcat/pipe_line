@@ -4,6 +4,7 @@ defmodule PipeLine.Impl.Core do
   """
   use Nostrum.Consumer
   require Logger
+  alias PipeLine.Impl.Registration
   alias Nostrum.Api
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
@@ -18,10 +19,7 @@ defmodule PipeLine.Impl.Core do
         Api.create_message(msg.channel_id, "node online, pid #{pid}")
 
       ">! register" ->
-        Logger.info("registering guild/channel")
-        guild_id = msg.guild_id
-        chan_id = msg.channel_id
-        Api.create_message(chan_id, "registering on channel <\##{chan_id}> in server #{guild_id}")
+        Registration.register(msg)
 
       _ ->
         :noop
