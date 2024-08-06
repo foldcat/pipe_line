@@ -58,6 +58,7 @@ defmodule PipeLine.Impl.Registration do
       end
     else
       Api.create_message(channel_id, "guild is already registered")
+      log_registration(msg, false)
     end
 
     :ok
