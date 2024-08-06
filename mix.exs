@@ -21,6 +21,8 @@ defmodule PipeLine.MixProject do
   defp deps do
     [
       {:nostrum, "~> 0.10"},
+      {:ecto_sqlite3, "~> 0.16"},
+      {:ecto, "~> 3.10"}
     ]
   end
 end

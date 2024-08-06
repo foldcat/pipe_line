@@ -27,3 +27,7 @@ pipe_line-*.tar
 
 # Token
 /config/
+
+# databade 
+database.db
+database.db*

@@ -7,7 +7,12 @@ defmodule PipeLine do
 
   def start(_type, _args) do
     Logger.info("starting")
-    children = [PipeLine.Impl.Core]
+
+    children = [
+      PipeLine.Impl.Core,
+      PipeLine.Database.Repo
+    ]
+
     Supervisor.start_link(children, strategy: :one_for_one)
   end
 end
