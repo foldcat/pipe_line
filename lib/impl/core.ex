@@ -5,6 +5,7 @@ defmodule PipeLine.Impl.Core do
   use Nostrum.Consumer
   require Logger
   alias PipeLine.Impl.Registration
+  alias PipeLine.Impl.Clist
   alias Nostrum.Api
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
@@ -20,6 +21,9 @@ defmodule PipeLine.Impl.Core do
 
       ">! register" ->
         Registration.register(msg)
+
+      ">! clist" ->
+        Clist.send_list(msg)
 
       _ ->
         :noop
