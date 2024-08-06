@@ -1,6 +1,6 @@
 defmodule PipeLine do
   @moduledoc """
-  Spawn up a base Supervisor
+  Spawn up a base Supervisor.
   """
   use Application
   require Logger
