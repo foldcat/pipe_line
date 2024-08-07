@@ -6,8 +6,10 @@ defmodule PipeLine.Impl.Clist do
   require Logger
   alias PipeLine.Database.Repo
   alias PipeLine.Database.Registration
-  import Ecto.Query
+  require Ecto.Query
   alias Nostrum.Api
+  alias Ecto.Query
+  import Nostrum.Struct.Embed
 
   @spec registration_to_string(Registration) :: String.t()
   def registration_to_string(reg) do
@@ -19,13 +21,21 @@ defmodule PipeLine.Impl.Clist do
 
   @spec send_list(Nostrum.Struct.Message) :: :ok
   def send_list(msg) do
-    query = from(Registration)
+    query = Query.from(Registration)
 
     formatted =
-      Repo.all(query)
-      |> Enum.map_join("", &registration_to_string(&1))
+      String.trim("""
+      ```clojure
+      #{Repo.all(query) |> Enum.map_join("", &registration_to_string(&1))}
+      ```
+      """)
 
-    Api.create_message(msg.channel_id, formatted)
+    clist_embed =
+      %Nostrum.Struct.Embed{}
+      |> put_title("clist")
+      |> put_description(formatted)
+
+    Api.create_message(msg.channel_id, embeds: [clist_embed])
 
     :ok
   end
