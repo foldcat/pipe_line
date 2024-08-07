@@ -1,3 +1,3 @@
 # PipeLine
 
-Relay text to multiple Discord channels.
+Relay messages to multiple Discord channels.
