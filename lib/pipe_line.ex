@@ -71,8 +71,11 @@ defmodule PipeLine.Core do
   alias PipeLine.Ping
   alias PipeLine.Registration
   alias PipeLine.Clist
+  alias PipeLine.Relay.Core
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
+    Task.start(fn -> Core.relay_msg(msg) end)
+
     case msg.content do
       ">! ping" ->
         Ping.ping(msg)
