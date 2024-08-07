@@ -1,4 +1,4 @@
-defmodule PipeLine.Impl.Registration do
+defmodule PipeLine.Registration do
   @moduledoc """
   Handles registration of channels.
   """

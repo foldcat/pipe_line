@@ -1,4 +1,4 @@
-defmodule PipeLine.Impl.Clist do
+defmodule PipeLine.Clist do
   @moduledoc """
   Sends out a list of every registered channels.
   """

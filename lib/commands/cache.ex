@@ -1,4 +1,4 @@
-defmodule PipeLine.Impl.Cache do
+defmodule PipeLine.Cache do
   @moduledoc """
   module that checks if individual 
   channel is cached

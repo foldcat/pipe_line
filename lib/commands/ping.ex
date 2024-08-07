@@ -1,4 +1,4 @@
-defmodule PipeLine.Impl.Ping do
+defmodule PipeLine.Ping do
   @moduledoc """
   Handles the ping command.
   """
