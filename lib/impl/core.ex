@@ -23,9 +23,8 @@ defmodule PipeLine.Impl.Init do
     Logger.info(blue() <> "ets started, table created!" <> reset())
 
     query =
-      from(r in Registration,
+      from r in Registration,
         select: r.channel_id
-      )
 
     chan_ids = Repo.all(query)
 
@@ -64,7 +63,7 @@ defmodule PipeLine.Impl.Core do
       ">! clist" ->
         Clist.send_list(msg)
 
-      ">! cached?" -> 
+      ">! cached?" ->
         Cache.cached?(msg)
 
       _ ->

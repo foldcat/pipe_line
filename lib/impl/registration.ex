@@ -15,9 +15,8 @@ defmodule PipeLine.Impl.Registration do
   @spec already_registered?(String.t()) :: boolean
   def already_registered?(guild_id) do
     query =
-      from(r in Registration,
+      from r in Registration,
         where: r.guild_id == ^guild_id
-      )
 
     Enum.empty?(Repo.all(query))
   end
