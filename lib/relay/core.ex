@@ -8,9 +8,9 @@ defmodule PipeLine.Relay.Core do
   import IO.ANSI
 
   @doc """
-  pipe_single_msg takes a message object and sends it 
+  `pipe_single_msg` takes a message object and sends it 
   to every channel that is registered BUT the channel 
-  id supplied to from_channel argument
+  id supplied to from_channel argument.
   """
   @spec pipe_msg(Nostrum.Struct.Message, String.t()) :: :ok
   def pipe_msg(msg, from_channel) do

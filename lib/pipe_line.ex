@@ -1,6 +1,6 @@
 defmodule PipeLine do
   @moduledoc """
-  Spawn up a base Supervisor.
+  Spawn up the base Supervisor.
   """
   use Application
   require Logger
@@ -8,9 +8,9 @@ defmodule PipeLine do
   def start(_type, _args) do
     Logger.info("starting")
 
+    # start database connection and the init process
     children = [
       PipeLine.Database.Repo,
-      PipeLine.Core,
       PipeLine.Init
     ]
 
@@ -39,6 +39,8 @@ defmodule PipeLine.Init do
 
     # we cache channel ids registered
     :ets.new(:chan_cache, [:set, :public, :named_table])
+    # and the webhooks
+    :ets.new(:webhook_cache, [:set, :public, :named_table])
 
     Logger.info(blue() <> "ets started, table created!" <> reset())
 
@@ -57,7 +59,25 @@ defmodule PipeLine.Init do
       :ets.insert(:chan_cache, {id})
     end)
 
+    start_service()
+
     {:ok, nil}
+  end
+
+  @doc """
+  Fires up the main handler.
+  Is ran after `init`.
+  """
+  def start_service do
+    Logger.info(green() <> "starting service" <> reset())
+
+    children = [
+      PipeLine.Core
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
+
+    Logger.info(green() <> "pipe-line ready" <> reset())
   end
 end
 

@@ -6,7 +6,7 @@ defmodule PipeLine.Database.Repo.Migrations.CreateRegistration do
   def up do
     create table(:registration, primary_key: false) do
       add(:guild_id, :string, primary_key: true)
-      add(:channel_id, :string, primary_key: true)
+      add(:channel_id, :string)
     end
   end
 
