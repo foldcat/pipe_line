@@ -27,12 +27,6 @@ locals_without_parens = [
 ]
 
 [
-  plugins: [Eunomo],
-  eunomo_opts: [
-    sort_alias: true,
-    sort_import: true,
-    sort_require: true
-  ],
   locals_without_parens: locals_without_parens,
   inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"]
 ]
