@@ -41,7 +41,7 @@ defmodule PipeLine.Relay.Core do
       )
 
     # said message is inside registered channel list
-    if not Enum.empty?(cache_lookup) do
+    if not Enum.empty?(cache_lookup) and msg.author.bot != true do
       Logger.info("""
       relaying message of id 
       #{blue() <> Integer.to_string(msg.id) <> reset()}
