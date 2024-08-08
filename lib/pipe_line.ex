@@ -67,11 +67,11 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
-  alias PipeLine.Commands.Unregister
   alias PipeLine.Commands.Cache
   alias PipeLine.Commands.Clist
   alias PipeLine.Commands.Ping
   alias PipeLine.Commands.Registration
+  alias PipeLine.Commands.Unregister
   alias PipeLine.Relay.Core
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
