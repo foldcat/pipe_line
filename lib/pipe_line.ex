@@ -24,11 +24,11 @@ defmodule PipeLine.Init do
   Mainly loads database into cache.
   """
   use GenServer
-  require Logger
-  alias PipeLine.Database.Repo
-  alias PipeLine.Database.Registration
   import Ecto.Query
   import IO.ANSI
+  alias PipeLine.Database.Registration
+  alias PipeLine.Database.Repo
+  require Logger
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
@@ -67,10 +67,10 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
-  alias PipeLine.Cache
-  alias PipeLine.Ping
-  alias PipeLine.Registration
-  alias PipeLine.Clist
+  alias PipeLine.Commands.Cache
+  alias PipeLine.Commands.Clist
+  alias PipeLine.Commands.Ping
+  alias PipeLine.Commands.Registration
   alias PipeLine.Relay.Core
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do

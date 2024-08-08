@@ -1,15 +1,13 @@
-defmodule PipeLine.Registration do
+defmodule PipeLine.Commands.Registration do
   @moduledoc """
   Handles registration of channels.
   """
   use Nostrum.Consumer
   require Logger
-  alias PipeLine.Database.Repo
-  alias PipeLine.Database.Registration
   alias Nostrum.Api
   import IO.ANSI
-  alias PipeLine.Database.Repo
   alias PipeLine.Database.Registration
+  alias PipeLine.Database.Repo
   import Ecto.Query
   import Nostrum.Struct.Embed
 

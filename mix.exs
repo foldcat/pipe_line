@@ -22,6 +22,7 @@ defmodule PipeLine.MixProject do
     [
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:eunomo, "~> 3.0.0", only: :dev},
       {:nostrum, "~> 0.10"},
       {:ecto_sqlite3, "~> 0.16"},
       {:ecto, "~> 3.10"}

@@ -1,15 +1,15 @@
-defmodule PipeLine.Clist do
+defmodule PipeLine.Commands.Clist do
   @moduledoc """
   Sends out a list of every registered channels.
   """
-  use Nostrum.Consumer
   require Logger
-  alias PipeLine.Database.Repo
-  alias PipeLine.Database.Registration
-  require Ecto.Query
+  use Nostrum.Consumer
   alias Nostrum.Api
-  alias Ecto.Query
   import Nostrum.Struct.Embed
+  alias PipeLine.Database.Registration
+  alias PipeLine.Database.Repo
+  require Ecto.Query
+  alias Ecto.Query
 
   @spec registration_to_string(Registration) :: String.t()
   def registration_to_string(reg) do

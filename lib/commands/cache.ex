@@ -1,4 +1,4 @@
-defmodule PipeLine.Cache do
+defmodule PipeLine.Commands.Cache do
   @moduledoc """
   module that checks if individual 
   channel is cached
@@ -8,14 +8,14 @@ defmodule PipeLine.Cache do
   import Nostrum.Struct.Embed
 
   @spec cached_embed() :: Nostrum.Struct.Embed.t()
-  def cached_embed() do
+  def cached_embed do
     %Nostrum.Struct.Embed{}
     |> put_title("ets query")
     |> put_description("this channel is cached")
   end
 
   @spec not_cached_embed() :: Nostrum.Struct.Embed.t()
-  def not_cached_embed() do
+  def not_cached_embed do
     %Nostrum.Struct.Embed{}
     |> put_title("ets query")
     |> put_description("this channel is not cached")
