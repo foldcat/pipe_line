@@ -2,12 +2,11 @@ defmodule PipeLine.Commands.Registration do
   @moduledoc """
   Handles registration of channels.
   """
-  use Nostrum.Consumer
   require Logger
   alias Nostrum.Api
-  import IO.ANSI
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
+  import IO.ANSI
   import Ecto.Query
   import Nostrum.Struct.Embed
 
@@ -22,7 +21,7 @@ defmodule PipeLine.Commands.Registration do
   def registeration_success_embed(chanid) do
     %Nostrum.Struct.Embed{}
     |> put_title("channel registration success!")
-    |> put_description("channel <##{chanid}> in this guild is already registered")
+    |> put_description("channel <##{chanid}> in this guild is successfully registered")
   end
 
   @spec registeration_failure(String.t()) :: Nostrum.Struct.Embed.t()
@@ -49,7 +48,7 @@ defmodule PipeLine.Commands.Registration do
       {:error, nil}
     else
       # get the first item
-      [result | _] = q_result
+      [result] = q_result
       {:ok, result}
     end
   end

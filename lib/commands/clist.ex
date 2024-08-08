@@ -3,7 +3,6 @@ defmodule PipeLine.Commands.Clist do
   Sends out a list of every registered channels.
   """
   require Logger
-  use Nostrum.Consumer
   alias Nostrum.Api
   import Nostrum.Struct.Embed
   alias PipeLine.Database.Registration

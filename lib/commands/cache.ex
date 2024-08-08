@@ -3,7 +3,6 @@ defmodule PipeLine.Commands.Cache do
   module that checks if individual 
   channel is cached
   """
-  use Nostrum.Consumer
   alias Nostrum.Api
   import Nostrum.Struct.Embed
 

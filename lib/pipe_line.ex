@@ -67,6 +67,7 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
+  alias PipeLine.Commands.Unregister
   alias PipeLine.Commands.Cache
   alias PipeLine.Commands.Clist
   alias PipeLine.Commands.Ping
@@ -82,6 +83,9 @@ defmodule PipeLine.Core do
 
       ">! register" ->
         Registration.register(msg)
+
+      ">! unregister" ->
+        Unregister.unregister(msg)
 
       ">! clist" ->
         Clist.send_list(msg)

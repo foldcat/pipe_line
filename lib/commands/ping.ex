@@ -2,7 +2,6 @@ defmodule PipeLine.Commands.Ping do
   @moduledoc """
   Handles the ping command.
   """
-  use Nostrum.Consumer
   require Logger
   alias Nostrum.Api
   import Nostrum.Struct.Embed
