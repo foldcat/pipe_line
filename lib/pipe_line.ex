@@ -28,6 +28,7 @@ defmodule PipeLine.Init do
   import IO.ANSI
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
+  alias PipeLine.Database.Webhooks
   require Logger
 
   def start_link(_) do
@@ -44,11 +45,13 @@ defmodule PipeLine.Init do
 
     Logger.info(blue() <> "ets started, table created!" <> reset())
 
-    query =
+    # cache all the registered channels
+
+    query_chanid =
       from r in Registration,
         select: r.channel_id
 
-    chan_ids = Repo.all(query)
+    chan_ids = Repo.all(query_chanid)
 
     Logger.info("""
       #{blue() <> "loading channel_ids" <> reset()}
@@ -57,6 +60,16 @@ defmodule PipeLine.Init do
 
     Enum.each(chan_ids, fn id ->
       :ets.insert(:chan_cache, {id})
+    end)
+
+    # cache all the webhooks
+
+    query_webhook = from(Webhooks)
+
+    webhooks = Repo.all(query_webhook)
+
+    Enum.each(webhooks, fn wh ->
+      :ets.insert(:webhook_cache, {wh.channel_id, wh.webhook_url})
     end)
 
     start_service()
