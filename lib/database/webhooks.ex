@@ -6,6 +6,7 @@ defmodule PipeLine.Database.Webhooks do
   @primary_key false
   schema "webhooks" do
     field :channel_id, :string
-    field :webhook_url, :string
+    field :webhook_id, :string
+    field :webhook_token, :string
   end
 end

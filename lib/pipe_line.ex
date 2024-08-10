@@ -69,7 +69,7 @@ defmodule PipeLine.Init do
     webhooks = Repo.all(query_webhook)
 
     Enum.each(webhooks, fn wh ->
-      :ets.insert(:webhook_cache, {wh.channel_id, wh.webhook_url})
+      :ets.insert(:webhook_cache, {wh.channel_id, wh.webhook_id, wh.webhook_token})
     end)
 
     start_service()

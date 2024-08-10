@@ -42,18 +42,19 @@ defmodule PipeLine.Relay.Webhook do
       # TODO: rework to store token
       case Repo.insert(%Webhooks{
              channel_id: channel_id,
-             webhook_url: webhook.url
+             webhook_id: webhook.id,
+             webhook_token: webhook.token
            }) do
         {:ok, _} ->
-          :ets.insert(:webhook_cache, {channel_id, webhook.url})
-          {:ok, webhook.url}
+          :ets.insert(:webhook_cache, {channel_id, webhook.id, webhook.token})
+          {:ok, webhook.id}
 
         {:error, err} ->
           {:error, err}
       end
     else
-      [{_chanid, webhook_url}] = query_result
-      {:ok, webhook_url}
+      [{_chanid, webhook_id, _webhook_token}] = query_result
+      {:ok, webhook_id}
     end
   end
 end
