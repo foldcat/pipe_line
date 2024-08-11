@@ -39,7 +39,6 @@ defmodule PipeLine.Relay.Webhook do
       #{blue() <> Kernel.inspect(webhook) <> reset()}
       """)
 
-      # TODO: rework to store token
       case Repo.insert(%Webhooks{
              channel_id: channel_id,
              webhook_id: webhook.id,
