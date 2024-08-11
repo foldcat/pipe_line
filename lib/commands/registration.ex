@@ -6,6 +6,7 @@ defmodule PipeLine.Commands.Registration do
   alias Nostrum.Api
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
+  alias PipeLine.Relay.Webhook
   import IO.ANSI
   import Ecto.Query
   import Nostrum.Struct.Embed
@@ -99,6 +100,8 @@ defmodule PipeLine.Commands.Registration do
              }) do
           {:ok, _} ->
             :ets.insert(:chan_cache, {Integer.to_string(channel_id)})
+
+            Webhook.get_webhook(Integer.to_string(channel_id))
 
             Api.create_message(channel_id,
               embeds: [registeration_success_embed(Integer.to_string(channel_id))]

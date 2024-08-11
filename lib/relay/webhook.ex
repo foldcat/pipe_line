@@ -18,7 +18,7 @@ defmodule PipeLine.Relay.Webhook do
   already has a webhook.
   """
 
-  @spec get_webhook(integer) :: {:ok, String.t()} | {:error, Ecto.Changeset.t()}
+  @spec get_webhook(String.t()) :: {:ok, String.t(), String.t()} | {:error, Ecto.Changeset.t()}
   def get_webhook(channel_id) do
     query_result = :ets.lookup(:webhook_cache, channel_id)
 
@@ -55,5 +55,33 @@ defmodule PipeLine.Relay.Webhook do
       [{_chanid, webhook_id, webhook_token}] = query_result
       {:ok, webhook_id, webhook_token}
     end
+  end
+
+  @spec get_avatar_url(String.t(), String.t()) :: String.t()
+  def get_avatar_url(id, avatar_hash) do
+    "https://cdn.discordapp.com/avatars/" <> id <> "/" <> avatar_hash
+  end
+
+  @spec relay_message(Nostrum.Struct.Message, String.t()) :: :ok
+  def relay_message(msg, channel_id) do
+    case get_webhook(channel_id) do
+      {:ok, webhook_id, webhook_token} ->
+        Logger.info(Kernel.inspect(msg))
+
+        Api.execute_webhook(
+          webhook_id,
+          webhook_token,
+          %{
+            content: msg.content,
+            username: msg.author.global_name,
+            avatar_url: get_avatar_url(Integer.to_string(msg.author.id), msg.author.avatar)
+          }
+        )
+
+      {:error, _} ->
+        :noop
+    end
+
+    :ok
   end
 end

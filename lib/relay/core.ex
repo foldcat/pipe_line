@@ -3,7 +3,7 @@ defmodule PipeLine.Relay.Core do
   Process that handles relaying messages 
   to multiple Discord channels.
   """
-
+  alias PipeLine.Relay.Webhook
   require Logger
   import IO.ANSI
 
@@ -18,12 +18,14 @@ defmodule PipeLine.Relay.Core do
 
     Enum.each(cache_lookup, fn {chanid} ->
       # do not relay message back to the original channel
-      if not (Integer.to_string(msg.channel_id) == from_channel) do
+      if not (chanid == from_channel) do
         Logger.info("""
           relaying message #{blue() <> Integer.to_string(msg.id) <> reset()}
           to channel #{blue() <> chanid <> reset()} 
           from channel #{blue() <> from_channel <> reset()}
         """)
+
+        Webhook.relay_message(msg, chanid)
       end
 
       nil
