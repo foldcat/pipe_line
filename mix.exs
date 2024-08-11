@@ -26,7 +26,8 @@ defmodule PipeLine.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:nostrum, "~> 0.10"},
       {:ecto_sqlite3, "~> 0.16"},
-      {:ecto, "~> 3.10"}
+      {:ecto, "~> 3.10"},
+      {:expletive, "~> 0.1.5"}
     ]
   end
 end

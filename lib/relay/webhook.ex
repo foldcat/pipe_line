@@ -8,6 +8,7 @@ defmodule PipeLine.Relay.Webhook do
   alias Nostrum.Api
   alias PipeLine.Database.Repo
   alias PipeLine.Database.Webhooks
+  alias PipeLine.Relay.Censor
   import IO.ANSI
 
   @doc """
@@ -66,15 +67,20 @@ defmodule PipeLine.Relay.Webhook do
   def relay_message(msg, channel_id) do
     case get_webhook(channel_id) do
       {:ok, webhook_id, webhook_token} ->
-        Logger.info(Kernel.inspect(msg))
-
         Api.execute_webhook(
           webhook_id,
           webhook_token,
           %{
-            content: msg.content,
+            content:
+              msg.content
+              |> Censor.replace_unicode()
+              |> Censor.sanitize(),
             username: msg.author.global_name,
-            avatar_url: get_avatar_url(Integer.to_string(msg.author.id), msg.author.avatar)
+            avatar_url:
+              get_avatar_url(
+                Integer.to_string(msg.author.id),
+                msg.author.avatar
+              )
           }
         )
 

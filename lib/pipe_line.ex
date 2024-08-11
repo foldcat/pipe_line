@@ -85,7 +85,8 @@ defmodule PipeLine.Init do
     Logger.info(green() <> "starting service" <> reset())
 
     children = [
-      PipeLine.Core
+      PipeLine.Core,
+      PipeLine.Relay.Censor
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
