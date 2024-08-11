@@ -47,14 +47,14 @@ defmodule PipeLine.Relay.Webhook do
            }) do
         {:ok, _} ->
           :ets.insert(:webhook_cache, {channel_id, webhook.id, webhook.token})
-          {:ok, webhook.id}
+          {:ok, webhook.id, webhook.token}
 
         {:error, err} ->
           {:error, err}
       end
     else
-      [{_chanid, webhook_id, _webhook_token}] = query_result
-      {:ok, webhook_id}
+      [{_chanid, webhook_id, webhook_token}] = query_result
+      {:ok, webhook_id, webhook_token}
     end
   end
 end
