@@ -12,6 +12,12 @@ defmodule PipeLine.Relay.Censor do
 
   def init(_state) do
     blacklist = Application.fetch_env!(:pipe_line, :blacklist)
+
+    Logger.info("""
+      starting censorship
+      pid: #{red() <> Kernel.inspect(self()) <> reset()}
+    """)
+
     {:ok, Expletive.configure(blacklist: blacklist)}
   end
 

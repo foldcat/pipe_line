@@ -36,6 +36,11 @@ defmodule PipeLine.Init do
   end
 
   def init(_) do
+    Logger.info("""
+      starting init process
+      pid: #{red() <> Kernel.inspect(self()) <> reset()}
+    """)
+
     Logger.info(blue() <> "starting ets" <> reset())
 
     # we cache channel ids registered
