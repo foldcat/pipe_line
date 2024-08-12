@@ -54,4 +54,9 @@ defmodule PipeLine.Relay.Core do
 
     :ok
   end
+
+  @spec update_msg(Nostrum.Struct.Message, Nostrum.Struct.Message) :: :ok
+  def update_msg(oldmsg, newmsg) do
+    :ok
+  end
 end

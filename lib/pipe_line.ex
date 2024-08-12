@@ -86,7 +86,8 @@ defmodule PipeLine.Init do
 
     children = [
       PipeLine.Core,
-      PipeLine.Relay.Censor
+      PipeLine.Relay.Censor,
+      PipeLine.Relay.ReplyCache
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
@@ -130,5 +131,9 @@ defmodule PipeLine.Core do
       _ ->
         :noop
     end
+  end
+
+  def handle_event({:MESSAGE_UPDATE, {oldmsg, newmsg}}) do
+    Task.start(fn -> Core.update_msg(oldmsg, newmsg) end)
   end
 end
