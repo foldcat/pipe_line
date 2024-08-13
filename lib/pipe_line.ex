@@ -142,8 +142,6 @@ defmodule PipeLine.Core do
   end
 
   def handle_event({:MESSAGE_UPDATE, {oldmsg, newmsg}, _ws_state}) do
-    Logger.info("update event got")
-
     if newmsg.author.bot == nil do
       Task.start(fn -> Core.update_msg(oldmsg, newmsg) end)
     end
