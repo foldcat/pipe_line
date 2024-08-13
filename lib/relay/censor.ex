@@ -43,7 +43,7 @@ defmodule PipeLine.Relay.Censor do
 
   @spec replace_unicode(String.t()) :: String.t()
   def replace_unicode(str) do
-    Logger.info("sanitizing #{green() <> str <> reset()}")
+    Logger.debug("sanitizing #{green() <> str <> reset()}")
 
     str
     |> String.codepoints()

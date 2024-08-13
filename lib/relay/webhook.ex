@@ -9,7 +9,6 @@ defmodule PipeLine.Relay.Webhook do
   alias PipeLine.Commands.Ban.OwnerCache
   alias PipeLine.Database.Repo
   alias PipeLine.Database.Webhooks
-  alias PipeLine.Relay.Censor
   import IO.ANSI
 
   @doc """
@@ -24,7 +23,7 @@ defmodule PipeLine.Relay.Webhook do
   def get_webhook(channel_id) do
     query_result = :ets.lookup(:webhook_cache, channel_id)
 
-    Logger.info("""
+    Logger.debug("""
       querying webhook of channel id #{blue() <> channel_id <> reset()}
       result: #{blue() <> Kernel.inspect(query_result) <> reset()}
     """)
@@ -68,18 +67,16 @@ defmodule PipeLine.Relay.Webhook do
     "https://cdn.discordapp.com/avatars/" <> id <> "/" <> avatar_hash
   end
 
-  @spec relay_message(Nostrum.Struct.Message, String.t()) :: {String.t(), String.t()} | nil
-  def relay_message(msg, channel_id) do
+  @spec relay_message(Nostrum.Struct.Message, String.t(), String.t()) ::
+          {String.t(), String.t()} | nil
+  def relay_message(msg, channel_id, content) do
     case get_webhook(channel_id) do
       {:ok, webhook_id, webhook_token} ->
         case Api.execute_webhook(
                webhook_id,
                webhook_token,
                %{
-                 content:
-                   msg.content
-                   |> Censor.replace_unicode()
-                   |> Censor.sanitize(),
+                 content: content,
                  username: msg.author.global_name,
                  avatar_url:
                    get_avatar_url(

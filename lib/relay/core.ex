@@ -4,6 +4,7 @@ defmodule PipeLine.Relay.Core do
   to multiple Discord channels.
   """
   alias Nostrum.Api
+  alias PipeLine.Relay.Censor
   alias PipeLine.Relay.ReplyCache
   alias PipeLine.Relay.Webhook
   require Logger
@@ -83,13 +84,18 @@ defmodule PipeLine.Relay.Core do
         if chanid == from_channel do
           nil
         else
-          Logger.info("""
+          Logger.debug("""
             relaying message #{blue() <> Integer.to_string(msg.id) <> reset()}
             to channel #{blue() <> chanid <> reset()} 
             from channel #{blue() <> from_channel <> reset()}
           """)
 
-          Webhook.relay_message(msg, chanid)
+          santized_content =
+            msg.content
+            |> Censor.replace_unicode()
+            |> Censor.sanitize()
+
+          Webhook.relay_message(msg, chanid, santized_content)
         end
       end)
       |> Enum.filter(fn item -> item != nil end)
@@ -103,13 +109,13 @@ defmodule PipeLine.Relay.Core do
   def relay_all(msg, cache_lookup) do
     # said message is inside registered channel list
     if not Enum.empty?(cache_lookup) do
-      Logger.info("""
-      relaying message of id 
-      #{blue() <> Integer.to_string(msg.id) <> reset()}
-      """)
-
       pipe_msg(msg, Integer.to_string(msg.channel_id))
     end
+
+    Logger.info("""
+    relayed #{blue() <> msg.author.global_name <> reset()}'s message:
+    #{green() <> msg.content <> reset()}
+    """)
 
     :ok
   end
@@ -146,17 +152,11 @@ defmodule PipeLine.Relay.Core do
       {:allow, _count} ->
         targets = ReplyCache.get_messages(Integer.to_string(newmsg.id))
 
-        IO.puts(red() <> Kernel.inspect(targets) <> reset())
-
         Enum.each(
           targets,
           fn ws_msg ->
             [{_chanid, webhook_info}] =
               :ets.lookup(:webhook_cache, ws_msg.channel_id)
-
-            Logger.info("""
-              relaying edit #{blue() <> Integer.to_string(newmsg.id) <> reset()}
-            """)
 
             Api.edit_webhook_message(
               webhook_info.webhook_id,
@@ -166,10 +166,13 @@ defmodule PipeLine.Relay.Core do
                 content: newmsg.content
               }
             )
-
-            Logger.info(blue() <> "edit relayed" <> reset())
           end
         )
+
+        Logger.info("""
+        relayed #{blue() <> newmsg.author.global_name <> reset()}'s edit:
+        #{green() <> newmsg.content <> reset()}
+        """)
 
       {:deny, _limit} ->
         warn_edit_limit_exceeded(newmsg, author_id)
