@@ -66,7 +66,7 @@ defmodule PipeLine.Relay.ReplyCache do
         }
       end
 
-    Logger.info("""
+    Logger.debug("""
     reply cache #{red() <> Kernel.inspect(self()) <> reset()}
     new state: #{blue() <> Kernel.inspect(new_state) <> reset()}
     """)
@@ -78,12 +78,15 @@ defmodule PipeLine.Relay.ReplyCache do
     {:reply, Map.get(state.map, message_id), state}
   end
 
-  @spec cache_message(String.t(), list(String.t())) :: :ok
-  def cache_message(message_id, webhook_msgs) do
-    GenServer.cast(__MODULE__, {:cache, message_id, webhook_msgs})
+  @spec cache_message(Nostrum.Struct.Message, list(String.t())) :: :ok
+  def cache_message(msg, webhook_msgs) do
+    GenServer.cast(
+      __MODULE__,
+      {:cache, Integer.to_string(msg.id), webhook_msgs}
+    )
   end
 
-  @spec get_messages(String.t()) :: list(String.t()) | nil
+  @spec get_messages(String.t()) :: {list(String.t()), String.t()} | nil
   def get_messages(message_id) do
     GenServer.call(__MODULE__, {:get, message_id})
   end

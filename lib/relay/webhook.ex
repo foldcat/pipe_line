@@ -46,15 +46,19 @@ defmodule PipeLine.Relay.Webhook do
              webhook_token: webhook.token
            }) do
         {:ok, _} ->
-          :ets.insert(:webhook_cache, {channel_id, webhook.id, webhook.token})
+          :ets.insert(
+            :webhook_cache,
+            {channel_id, %{webhook_id: webhook.id, webhook_token: webhook.token}}
+          )
+
           {:ok, webhook.id, webhook.token}
 
         {:error, err} ->
           {:error, err}
       end
     else
-      [{_chanid, webhook_id, webhook_token}] = query_result
-      {:ok, webhook_id, webhook_token}
+      [{_chanid, webhook_info}] = query_result
+      {:ok, webhook_info.webhook_id, webhook_info.webhook_token}
     end
   end
 
@@ -63,31 +67,40 @@ defmodule PipeLine.Relay.Webhook do
     "https://cdn.discordapp.com/avatars/" <> id <> "/" <> avatar_hash
   end
 
-  @spec relay_message(Nostrum.Struct.Message, String.t()) :: :ok
+  @spec relay_message(Nostrum.Struct.Message, String.t()) :: {String.t(), String.t()} | nil
   def relay_message(msg, channel_id) do
     case get_webhook(channel_id) do
       {:ok, webhook_id, webhook_token} ->
-        Api.execute_webhook(
-          webhook_id,
-          webhook_token,
-          %{
-            content:
-              msg.content
-              |> Censor.replace_unicode()
-              |> Censor.sanitize(),
-            username: msg.author.global_name,
-            avatar_url:
-              get_avatar_url(
-                Integer.to_string(msg.author.id),
-                msg.author.avatar
-              )
-          }
-        )
+        case Api.execute_webhook(
+               webhook_id,
+               webhook_token,
+               %{
+                 content:
+                   msg.content
+                   |> Censor.replace_unicode()
+                   |> Censor.sanitize(),
+                 username: msg.author.global_name,
+                 avatar_url:
+                   get_avatar_url(
+                     Integer.to_string(msg.author.id),
+                     msg.author.avatar
+                   )
+               },
+               true
+             ) do
+          {:ok, webhook} ->
+            # return the webhook id and webhook channel id
+            %{
+              message_id: Integer.to_string(webhook.id),
+              channel_id: channel_id
+            }
+
+          _ ->
+            nil
+        end
 
       {:error, _} ->
-        :noop
+        nil
     end
-
-    :ok
   end
 end

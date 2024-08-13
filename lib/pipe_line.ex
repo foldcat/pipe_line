@@ -74,7 +74,10 @@ defmodule PipeLine.Init do
     webhooks = Repo.all(query_webhook)
 
     Enum.each(webhooks, fn wh ->
-      :ets.insert(:webhook_cache, {wh.channel_id, wh.webhook_id, wh.webhook_token})
+      :ets.insert(
+        :webhook_cache,
+        {wh.channel_id, %{webhook_id: wh.webhook_id, webhook_token: wh.webhook_token}}
+      )
     end)
 
     start_service()
@@ -138,7 +141,11 @@ defmodule PipeLine.Core do
     end
   end
 
-  def handle_event({:MESSAGE_UPDATE, {oldmsg, newmsg}}) do
-    Task.start(fn -> Core.update_msg(oldmsg, newmsg) end)
+  def handle_event({:MESSAGE_UPDATE, {oldmsg, newmsg}, _ws_state}) do
+    Logger.info("update event got")
+
+    if newmsg.author.bot == nil do
+      Task.start(fn -> Core.update_msg(oldmsg, newmsg) end)
+    end
   end
 end
