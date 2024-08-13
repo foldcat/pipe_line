@@ -24,6 +24,50 @@ defmodule PipeLine.Relay.Core do
     |> put_description("you have exceeded the 1 edit per 5 seconds rate limit")
   end
 
+  @spec warn_relay_limit_exceeded(Nostrum.Struct.Message, integer) :: :ok
+  def warn_relay_limit_exceeded(msg, author_id) do
+    Logger.info("""
+    not relaying #{red() <> Integer.to_string(msg.id) <> red()}
+    as limit is exceeded
+    """)
+
+    case(Hammer.check_rate("relay-msg-warn#{author_id}", 5000, 1)) do
+      {:allow, _count} ->
+        Api.create_message(
+          msg.channel_id,
+          embeds: [relay_ratelimit_exceeded()],
+          message_reference: %{message_id: msg.id}
+        )
+
+      {:deny, _limit} ->
+        nil
+    end
+
+    :ok
+  end
+
+  @spec warn_edit_limit_exceeded(Nostrum.Struct.Message, integer) :: :ok
+  def warn_edit_limit_exceeded(msg, author_id) do
+    Logger.info("""
+    not editing #{red() <> Integer.to_string(msg.id) <> red()}
+    as limit is exceeded
+    """)
+
+    case(Hammer.check_rate("edit-msg-warn#{author_id}", 10_000, 1)) do
+      {:allow, _count} ->
+        Api.create_message(
+          msg.channel_id,
+          embeds: [edit_ratelimit_exceeded()],
+          message_reference: %{message_id: msg.id}
+        )
+
+      {:deny, _limit} ->
+        nil
+    end
+
+    :ok
+  end
+
   @doc """
   `pipe_single_msg` takes a message object and sends it 
   to every channel that is registered BUT the channel 
@@ -55,6 +99,21 @@ defmodule PipeLine.Relay.Core do
     :ok
   end
 
+  @spec relay_all(Nostrum.Struct.Message, list({String.t()})) :: :ok
+  def relay_all(msg, cache_lookup) do
+    # said message is inside registered channel list
+    if not Enum.empty?(cache_lookup) do
+      Logger.info("""
+      relaying message of id 
+      #{blue() <> Integer.to_string(msg.id) <> reset()}
+      """)
+
+      pipe_msg(msg, Integer.to_string(msg.channel_id))
+    end
+
+    :ok
+  end
+
   @spec relay_msg(Nostrum.Struct.Message) :: :ok
   def relay_msg(msg) do
     author_id = msg.author.id
@@ -69,32 +128,10 @@ defmodule PipeLine.Relay.Core do
             )
 
           # said message is inside registered channel list
-          if not Enum.empty?(cache_lookup) do
-            Logger.info("""
-            relaying message of id 
-            #{blue() <> Integer.to_string(msg.id) <> reset()}
-            """)
-
-            pipe_msg(msg, Integer.to_string(msg.channel_id))
-          end
+          relay_all(msg, cache_lookup)
 
         {:deny, _limit} ->
-          Logger.info("""
-          not relaying #{red() <> Integer.to_string(msg.id) <> red()}
-          as limit is exceeded
-          """)
-
-          case(Hammer.check_rate("relay-msg-warn#{author_id}", 5000, 1)) do
-            {:allow, _count} ->
-              Api.create_message(
-                msg.channel_id,
-                embeds: [relay_ratelimit_exceeded()],
-                message_reference: %{message_id: msg.id}
-              )
-
-            {:deny, _limit} ->
-              nil
-          end
+          warn_relay_limit_exceeded(msg, author_id)
       end
     end
 
@@ -105,7 +142,7 @@ defmodule PipeLine.Relay.Core do
   def update_msg(_oldmsg, newmsg) do
     author_id = newmsg.author.id
 
-    case(Hammer.check_rate("edit-msg#{author_id}", 10000, 1)) do
+    case(Hammer.check_rate("edit-msg#{author_id}", 10_000, 1)) do
       {:allow, _count} ->
         targets = ReplyCache.get_messages(Integer.to_string(newmsg.id))
 
@@ -135,22 +172,7 @@ defmodule PipeLine.Relay.Core do
         )
 
       {:deny, _limit} ->
-        Logger.info("""
-        not editing #{red() <> Integer.to_string(newmsg.id) <> red()}
-        as limit is exceeded
-        """)
-
-        case(Hammer.check_rate("edit-msg-warn#{author_id}", 10000, 1)) do
-          {:allow, _count} ->
-            Api.create_message(
-              newmsg.channel_id,
-              embeds: [edit_ratelimit_exceeded()],
-              message_reference: %{message_id: newmsg.id}
-            )
-
-          {:deny, _limit} ->
-            nil
-        end
+        warn_edit_limit_exceeded(newmsg, author_id)
     end
 
     :ok
