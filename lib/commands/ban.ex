@@ -64,7 +64,7 @@ defmodule PipeLine.Commands.Ban.OwnerCache do
       {
         [],
         %{},
-        Application.fetch_env!(:pipe_line, :max_ban_hook_cache_size)
+        Application.fetch_env!(:pipe_line, :max_owner_cache_size)
       },
       name: __MODULE__
     )
