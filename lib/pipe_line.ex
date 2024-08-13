@@ -95,7 +95,8 @@ defmodule PipeLine.Init do
     children = [
       PipeLine.Core,
       PipeLine.Relay.Censor,
-      PipeLine.Relay.ReplyCache
+      PipeLine.Relay.ReplyCache,
+      PipeLine.Commands.Ban.OwnerCache
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
@@ -110,6 +111,7 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
+  alias PipeLine.Commands.Ban
   alias PipeLine.Commands.Cache
   alias PipeLine.Commands.Clist
   alias PipeLine.Commands.Ping
@@ -120,24 +122,29 @@ defmodule PipeLine.Core do
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
     Task.start(fn -> Core.relay_msg(msg) end)
 
-    case msg.content do
-      ">! ping" ->
-        Ping.ping(msg)
+    if msg.author.bot == nil do
+      case msg.content do
+        ">! ping" ->
+          Ping.ping(msg)
 
-      ">! register" ->
-        Registration.register(msg)
+        ">! register" ->
+          Registration.register(msg)
 
-      ">! unregister" ->
-        Unregister.unregister(msg)
+        ">! unregister" ->
+          Unregister.unregister(msg)
 
-      ">! clist" ->
-        Clist.send_list(msg)
+        ">! clist" ->
+          Clist.send_list(msg)
 
-      ">! cached?" ->
-        Cache.cached?(msg)
+        ">! cached?" ->
+          Cache.cached?(msg)
 
-      _ ->
-        :noop
+        ">! ban" <> _ ->
+          Ban.ban(msg)
+
+        _ ->
+          :noop
+      end
     end
   end
 

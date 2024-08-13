@@ -6,6 +6,7 @@ defmodule PipeLine.Relay.Webhook do
   require Logger
   alias Ecto.Repo
   alias Nostrum.Api
+  alias PipeLine.Commands.Ban.OwnerCache
   alias PipeLine.Database.Repo
   alias PipeLine.Database.Webhooks
   alias PipeLine.Relay.Censor
@@ -90,6 +91,11 @@ defmodule PipeLine.Relay.Webhook do
              ) do
           {:ok, webhook} ->
             # return the webhook id and webhook channel id
+            OwnerCache.cache_owner(
+              Integer.to_string(webhook.id),
+              Integer.to_string(msg.author.id)
+            )
+
             %{
               message_id: Integer.to_string(webhook.id),
               channel_id: channel_id
