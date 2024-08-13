@@ -59,41 +59,43 @@ defmodule PipeLine.Relay.Core do
   def relay_msg(msg) do
     author_id = msg.author.id
 
-    case(Hammer.check_rate("relay-msg#{author_id}", 5000, 2)) do
-      {:allow, _count} ->
-        cache_lookup =
-          :ets.lookup(
-            :chan_cache,
-            Integer.to_string(msg.channel_id)
-          )
-
-        # said message is inside registered channel list
-        if not Enum.empty?(cache_lookup) and msg.author.bot != true do
-          Logger.info("""
-          relaying message of id 
-          #{blue() <> Integer.to_string(msg.id) <> reset()}
-          """)
-
-          pipe_msg(msg, Integer.to_string(msg.channel_id))
-        end
-
-      {:deny, _limit} ->
-        Logger.info("""
-        not relaying #{red() <> Integer.to_string(msg.id) <> red()}
-        as limit is exceeded
-        """)
-
-        case(Hammer.check_rate("relay-msg-warn#{author_id}", 5000, 1)) do
-          {:allow, _count} ->
-            Api.create_message(
-              msg.channel_id,
-              embeds: [relay_ratelimit_exceeded()],
-              message_reference: %{message_id: msg.id}
+    if msg.author.bot == nil do
+      case(Hammer.check_rate("relay-msg#{author_id}", 5000, 2)) do
+        {:allow, _count} ->
+          cache_lookup =
+            :ets.lookup(
+              :chan_cache,
+              Integer.to_string(msg.channel_id)
             )
 
-          {:deny, _limit} ->
-            nil
-        end
+          # said message is inside registered channel list
+          if not Enum.empty?(cache_lookup) do
+            Logger.info("""
+            relaying message of id 
+            #{blue() <> Integer.to_string(msg.id) <> reset()}
+            """)
+
+            pipe_msg(msg, Integer.to_string(msg.channel_id))
+          end
+
+        {:deny, _limit} ->
+          Logger.info("""
+          not relaying #{red() <> Integer.to_string(msg.id) <> red()}
+          as limit is exceeded
+          """)
+
+          case(Hammer.check_rate("relay-msg-warn#{author_id}", 5000, 1)) do
+            {:allow, _count} ->
+              Api.create_message(
+                msg.channel_id,
+                embeds: [relay_ratelimit_exceeded()],
+                message_reference: %{message_id: msg.id}
+              )
+
+            {:deny, _limit} ->
+              nil
+          end
+      end
     end
 
     :ok
