@@ -26,6 +26,7 @@ defmodule PipeLine.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       # {:nostrum, "~> 0.10"},
       {:nostrum, github: "foldcat/nostrum"},
+      {:hammer, "~> 6.1"},
       {:ecto_sqlite3, "~> 0.16"},
       {:ecto, "~> 3.10"},
       {:expletive, "~> 0.1.5"}

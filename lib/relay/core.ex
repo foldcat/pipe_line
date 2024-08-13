@@ -8,6 +8,21 @@ defmodule PipeLine.Relay.Core do
   alias PipeLine.Relay.Webhook
   require Logger
   import IO.ANSI
+  import Nostrum.Struct.Embed
+
+  @spec relay_ratelimit_exceeded() :: Nostrum.Struct.Embed.t()
+  def relay_ratelimit_exceeded do
+    %Nostrum.Struct.Embed{}
+    |> put_title("rate limit exceeded")
+    |> put_description("you have exceeded the 2 messages per 5 seconds rate limit")
+  end
+
+  @spec edit_ratelimit_exceeded() :: Nostrum.Struct.Embed.t()
+  def edit_ratelimit_exceeded do
+    %Nostrum.Struct.Embed{}
+    |> put_title("rate limit exceeded")
+    |> put_description("you have exceeded the 1 edit per 5 seconds rate limit")
+  end
 
   @doc """
   `pipe_single_msg` takes a message object and sends it 
@@ -42,20 +57,43 @@ defmodule PipeLine.Relay.Core do
 
   @spec relay_msg(Nostrum.Struct.Message) :: :ok
   def relay_msg(msg) do
-    cache_lookup =
-      :ets.lookup(
-        :chan_cache,
-        Integer.to_string(msg.channel_id)
-      )
+    author_id = msg.author.id
 
-    # said message is inside registered channel list
-    if not Enum.empty?(cache_lookup) and msg.author.bot != true do
-      Logger.info("""
-      relaying message of id 
-      #{blue() <> Integer.to_string(msg.id) <> reset()}
-      """)
+    case(Hammer.check_rate("relay-msg#{author_id}", 5000, 2)) do
+      {:allow, _count} ->
+        cache_lookup =
+          :ets.lookup(
+            :chan_cache,
+            Integer.to_string(msg.channel_id)
+          )
 
-      pipe_msg(msg, Integer.to_string(msg.channel_id))
+        # said message is inside registered channel list
+        if not Enum.empty?(cache_lookup) and msg.author.bot != true do
+          Logger.info("""
+          relaying message of id 
+          #{blue() <> Integer.to_string(msg.id) <> reset()}
+          """)
+
+          pipe_msg(msg, Integer.to_string(msg.channel_id))
+        end
+
+      {:deny, _limit} ->
+        Logger.info("""
+        not relaying #{red() <> Integer.to_string(msg.id) <> red()}
+        as limit is exceeded
+        """)
+
+        case(Hammer.check_rate("relay-msg-warn#{author_id}", 5000, 1)) do
+          {:allow, _count} ->
+            Api.create_message(
+              msg.channel_id,
+              embeds: [relay_ratelimit_exceeded()],
+              message_reference: %{message_id: msg.id}
+            )
+
+          {:deny, _limit} ->
+            nil
+        end
     end
 
     :ok
@@ -63,32 +101,55 @@ defmodule PipeLine.Relay.Core do
 
   @spec update_msg(Nostrum.Struct.Message, Nostrum.Struct.Message) :: :ok
   def update_msg(_oldmsg, newmsg) do
-    targets = ReplyCache.get_messages(Integer.to_string(newmsg.id))
+    author_id = newmsg.author.id
 
-    IO.puts(red() <> Kernel.inspect(targets) <> reset())
+    case(Hammer.check_rate("edit-msg#{author_id}", 10000, 1)) do
+      {:allow, _count} ->
+        targets = ReplyCache.get_messages(Integer.to_string(newmsg.id))
 
-    Enum.each(
-      targets,
-      fn ws_msg ->
-        [{_chanid, webhook_info}] =
-          :ets.lookup(:webhook_cache, ws_msg.channel_id)
+        IO.puts(red() <> Kernel.inspect(targets) <> reset())
 
-        Logger.info("""
-          relaying edit #{blue() <> Integer.to_string(newmsg.id) <> reset()}
-        """)
+        Enum.each(
+          targets,
+          fn ws_msg ->
+            [{_chanid, webhook_info}] =
+              :ets.lookup(:webhook_cache, ws_msg.channel_id)
 
-        Api.edit_webhook_message(
-          webhook_info.webhook_id,
-          webhook_info.webhook_token,
-          ws_msg.message_id,
-          %{
-            content: newmsg.content
-          }
+            Logger.info("""
+              relaying edit #{blue() <> Integer.to_string(newmsg.id) <> reset()}
+            """)
+
+            Api.edit_webhook_message(
+              webhook_info.webhook_id,
+              webhook_info.webhook_token,
+              ws_msg.message_id,
+              %{
+                content: newmsg.content
+              }
+            )
+
+            Logger.info(blue() <> "edit relayed" <> reset())
+          end
         )
 
-        Logger.info(blue() <> "edit relayed" <> reset())
-      end
-    )
+      {:deny, _limit} ->
+        Logger.info("""
+        not editing #{red() <> Integer.to_string(newmsg.id) <> red()}
+        as limit is exceeded
+        """)
+
+        case(Hammer.check_rate("edit-msg-warn#{author_id}", 10000, 1)) do
+          {:allow, _count} ->
+            Api.create_message(
+              newmsg.channel_id,
+              embeds: [edit_ratelimit_exceeded()],
+              message_reference: %{message_id: newmsg.id}
+            )
+
+          {:deny, _limit} ->
+            nil
+        end
+    end
 
     :ok
   end
