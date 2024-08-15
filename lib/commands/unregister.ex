@@ -4,6 +4,7 @@ defmodule PipeLine.Commands.Unregister do
   """
   require Logger
   alias Nostrum.Api
+  alias PipeLine.Commands
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
   import IO.ANSI
@@ -31,8 +32,8 @@ defmodule PipeLine.Commands.Unregister do
     |> put_description("<##{chanid}> is not registered")
   end
 
-  @spec unregister(Nostrum.Struct.Message) :: :ok
-  def unregister(msg) do
+  @spec unregister_impl(Nostrum.Struct.Message) :: :ok
+  def unregister_impl(msg) do
     try do
       query =
         from r in Registration,
@@ -75,5 +76,14 @@ defmodule PipeLine.Commands.Unregister do
     end
 
     :ok
+  end
+
+  @spec unregister(Nostrum.Struct.Message) :: :ok
+  def unregister(msg) do
+    if Commands.Registration.has_permission(msg.guild_id, msg.author.id) do
+      unregister_impl(msg)
+    else
+      Commands.Registration.warn_permission(msg)
+    end
   end
 end

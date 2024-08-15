@@ -4,12 +4,41 @@ defmodule PipeLine.Commands.Registration do
   """
   require Logger
   alias Nostrum.Api
+  alias Nostrum.Cache.GuildCache
+  alias Nostrum.Cache.MemberCache
+  alias Nostrum.Struct.Guild.Member
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
   alias PipeLine.Relay.Webhook
   import IO.ANSI
   import Ecto.Query
   import Nostrum.Struct.Embed
+
+  @spec no_perm_embed() :: Nostrum.Struct.Embed.t()
+  def no_perm_embed do
+    %Nostrum.Struct.Embed{}
+    |> put_title("no permissions")
+    |> put_description("you need :manage_channels permission")
+  end
+
+  @spec has_permission(integer, integer) :: boolean
+  def has_permission(guild_id, member_id) do
+    {:ok, guild} = GuildCache.get(guild_id)
+    {:ok, member} = MemberCache.get(guild_id, member_id)
+    member_perms = Member.guild_permissions(member, guild)
+    :manage_channels in member_perms
+  end
+
+  @spec warn_permission(Nostrum.Struct.Message) :: :ok
+  def warn_permission(msg) do
+    Api.create_message(
+      msg.channel_id,
+      embeds: [no_perm_embed()],
+      message_reference: %{message_id: msg.id}
+    )
+
+    :ok
+  end
 
   @spec already_registered_embed(String.t()) :: Nostrum.Struct.Embed.t()
   def already_registered_embed(chanid) do
@@ -75,26 +104,13 @@ defmodule PipeLine.Commands.Registration do
     end
   end
 
-  @spec insert_registration(Nostrum.Struct.Message) :: :ok
-  def insert_registration(msg) do
-    guild_id = msg.guild_id
-    channel_id = msg.channel_id
+  @spec insert_registration_impl(Nostrum.Struct.Message) :: :ok
+  def insert_registration_impl(msg) do
+    case(Hammer.check_rate("register-chan#{msg.guild_id}", 60_000, 1)) do
+      {:allow, _count} ->
+        guild_id = msg.guild_id
+        channel_id = msg.channel_id
 
-    case query_chanid(Integer.to_string(guild_id)) do
-      # chanid is registered
-      # fail the registration
-      {:ok, queried_chanid} ->
-        Api.create_message(
-          channel_id,
-          embeds: [already_registered_embed(queried_chanid)],
-          message_reference: %{message_id: msg.id}
-        )
-
-        log_registration(msg, false)
-
-      # chanid is not registered
-      # lets make the registration succeed
-      {:error, _} ->
         case Repo.insert(%Registration{
                guild_id: Integer.to_string(guild_id),
                channel_id: Integer.to_string(channel_id)
@@ -120,6 +136,33 @@ defmodule PipeLine.Commands.Registration do
             Logger.error("unknown error arising from registration attempt below:")
             log_registration(msg, false)
         end
+
+      {:deny, _limit} ->
+        warn_reg_limit_exceeded(msg)
+    end
+  end
+
+  @spec insert_registration(Nostrum.Struct.Message) :: :ok
+  def insert_registration(msg) do
+    guild_id = msg.guild_id
+    channel_id = msg.channel_id
+
+    case query_chanid(Integer.to_string(guild_id)) do
+      # chanid is registered
+      # fail the registration
+      {:ok, queried_chanid} ->
+        Api.create_message(
+          channel_id,
+          embeds: [already_registered_embed(queried_chanid)],
+          message_reference: %{message_id: msg.id}
+        )
+
+        log_registration(msg, false)
+
+      # chanid is not registered
+      # lets make the registration succeed
+      {:error, _} ->
+        insert_registration_impl(msg)
     end
   end
 
@@ -156,12 +199,10 @@ defmodule PipeLine.Commands.Registration do
 
   @spec register(Nostrum.Struct.Message) :: :ok
   def register(msg) do
-    case(Hammer.check_rate("register-chan#{msg.guild_id}", 60_000, 1)) do
-      {:allow, _count} ->
-        insert_registration(msg)
-
-      {:deny, _limit} ->
-        warn_reg_limit_exceeded(msg)
+    if has_permission(msg.guild_id, msg.author.id) do
+      insert_registration(msg)
+    else
+      warn_permission(msg)
     end
 
     :ok
