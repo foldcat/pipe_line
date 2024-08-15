@@ -86,7 +86,8 @@ defmodule PipeLine.Commands.Registration do
       {:ok, queried_chanid} ->
         Api.create_message(
           channel_id,
-          embeds: [already_registered_embed(queried_chanid)]
+          embeds: [already_registered_embed(queried_chanid)],
+          message_reference: %{message_id: msg.id}
         )
 
         log_registration(msg, false)
@@ -104,14 +105,16 @@ defmodule PipeLine.Commands.Registration do
             Webhook.get_webhook(Integer.to_string(channel_id))
 
             Api.create_message(channel_id,
-              embeds: [registeration_success_embed(Integer.to_string(channel_id))]
+              embeds: [registeration_success_embed(Integer.to_string(channel_id))],
+              message_reference: %{message_id: msg.id}
             )
 
             log_registration(msg, true)
 
           {:error, _} ->
             Api.create_message(channel_id,
-              embeds: [registeration_failure(Integer.to_string(channel_id))]
+              embeds: [registeration_failure(Integer.to_string(channel_id))],
+              message_reference: %{message_id: msg.id}
             )
 
             Logger.error("unknown error arising from registration attempt below:")

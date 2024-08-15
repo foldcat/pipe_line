@@ -19,7 +19,11 @@ defmodule PipeLine.Commands.Ping do
       |> put_description("node online, pid `#{pid}`")
 
     Logger.info("got ping")
-    Api.create_message(msg.channel_id, embeds: [ping_embed])
+
+    Api.create_message(msg.channel_id,
+      embeds: [ping_embed],
+      message_reference: %{message_id: msg.id}
+    )
 
     :ok
   end

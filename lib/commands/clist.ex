@@ -34,7 +34,10 @@ defmodule PipeLine.Commands.Clist do
       |> put_title("clist")
       |> put_description(formatted)
 
-    Api.create_message(msg.channel_id, embeds: [clist_embed])
+    Api.create_message(msg.channel_id,
+      embeds: [clist_embed],
+      message_reference: %{message_id: msg.id}
+    )
 
     :ok
   end

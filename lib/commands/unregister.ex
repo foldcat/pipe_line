@@ -48,7 +48,8 @@ defmodule PipeLine.Commands.Unregister do
         """)
 
         Api.create_message(msg.channel_id,
-          embeds: [channel_not_registered(Integer.to_string(msg.channel_id))]
+          embeds: [channel_not_registered(Integer.to_string(msg.channel_id))],
+          message_reference: %{message_id: msg.id}
         )
       else
         Logger.info("""
@@ -59,13 +60,15 @@ defmodule PipeLine.Commands.Unregister do
         :ets.delete(:chan_cache, Integer.to_string(msg.channel_id))
 
         Api.create_message(msg.channel_id,
-          embeds: [unregisteration_success(Integer.to_string(msg.channel_id))]
+          embeds: [unregisteration_success(Integer.to_string(msg.channel_id))],
+          message_reference: %{message_id: msg.id}
         )
       end
     rescue
       error ->
         Api.create_message(msg.channel_id,
-          embeds: [unregisteration_failure(Integer.to_string(msg.channel_id))]
+          embeds: [unregisteration_failure(Integer.to_string(msg.channel_id))],
+          message_reference: %{message_id: msg.id}
         )
 
         Logger.error(Exception.format(:error, error, __STACKTRACE__))

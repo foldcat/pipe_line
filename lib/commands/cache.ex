@@ -29,9 +29,15 @@ defmodule PipeLine.Commands.Cache do
       )
 
     if Enum.empty?(query_result) do
-      Api.create_message(msg.channel_id, embeds: [not_cached_embed()])
+      Api.create_message(msg.channel_id,
+        embeds: [not_cached_embed()],
+        message_reference: %{message_id: msg.id}
+      )
     else
-      Api.create_message(msg.channel_id, embeds: [cached_embed()])
+      Api.create_message(msg.channel_id,
+        embeds: [cached_embed()],
+        message_reference: %{message_id: msg.id}
+      )
     end
 
     :ok
