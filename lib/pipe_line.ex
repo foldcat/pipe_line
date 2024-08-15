@@ -139,7 +139,6 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
-  alias PipeLine.Relay.Delete
   alias PipeLine.Commands.Admin
   alias PipeLine.Commands.Ban
   alias PipeLine.Commands.Cache
@@ -151,6 +150,8 @@ defmodule PipeLine.Core do
   alias PipeLine.Commands.Rules
   alias PipeLine.Commands.Unregister
   alias PipeLine.Relay.Core
+  alias PipeLine.Relay.Delete
+  alias PipeLine.Relay.EditMsg
 
   # credo:disable-for-next-line
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
@@ -209,7 +210,7 @@ defmodule PipeLine.Core do
 
   def handle_event({:MESSAGE_UPDATE, {oldmsg, newmsg}, _ws_state}) do
     if newmsg.author.bot == nil do
-      Task.start(fn -> Core.update_msg(oldmsg, newmsg) end)
+      Task.start(fn -> EditMsg.update_msg(oldmsg, newmsg) end)
     end
   end
 
