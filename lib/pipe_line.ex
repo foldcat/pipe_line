@@ -139,6 +139,7 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
+  alias PipeLine.Relay.Delete
   alias PipeLine.Commands.Admin
   alias PipeLine.Commands.Ban
   alias PipeLine.Commands.Cache
@@ -210,5 +211,9 @@ defmodule PipeLine.Core do
     if newmsg.author.bot == nil do
       Task.start(fn -> Core.update_msg(oldmsg, newmsg) end)
     end
+  end
+
+  def handle_event({:MESSAGE_DELETE, msg, _ws_state}) do
+    Task.start(fn -> Delete.delete(Integer.to_string(msg.id)) end)
   end
 end

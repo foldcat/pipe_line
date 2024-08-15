@@ -14,6 +14,7 @@ defmodule PipeLine.Commands.Info do
     - we only relay ASCII symbols
     - we only relay a subset of built in emoji
     - some words are implicitly censored
+    - delete and edit does not work on old messages
     """)
   end
 

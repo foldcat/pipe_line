@@ -113,7 +113,7 @@ defmodule PipeLine.Relay.Core do
       pipe_msg(msg, Integer.to_string(msg.channel_id))
 
       Logger.info("""
-      relayed #{blue() <> msg.author.global_name <> reset()}'s message:
+        relayed #{blue() <> msg.author.global_name <> reset()}'s (#{green() <> Integer.to_string(msg.author.id) <> reset()}) message:
       #{green() <> msg.content <> reset()}
       """)
     end
