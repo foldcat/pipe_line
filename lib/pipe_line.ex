@@ -215,6 +215,11 @@ defmodule PipeLine.Core do
   end
 
   def handle_event({:MESSAGE_DELETE, msg, _ws_state}) do
-    Task.start(fn -> Delete.delete(Integer.to_string(msg.id)) end)
+    Task.start(fn ->
+      Delete.delete(
+        Integer.to_string(msg.id),
+        Integer.to_string(msg.channel_id)
+      )
+    end)
   end
 end
