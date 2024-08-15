@@ -143,11 +143,15 @@ defmodule PipeLine.Core do
   alias PipeLine.Commands.Ban
   alias PipeLine.Commands.Cache
   alias PipeLine.Commands.Clist
+  alias PipeLine.Commands.Help
+  alias PipeLine.Commands.Info
   alias PipeLine.Commands.Ping
   alias PipeLine.Commands.Registration
+  alias PipeLine.Commands.Rules
   alias PipeLine.Commands.Unregister
   alias PipeLine.Relay.Core
 
+  # credo:disable-for-next-line
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
     Task.start(fn -> Core.relay_msg(msg) end)
 
@@ -177,12 +181,23 @@ defmodule PipeLine.Core do
         ">! getowner" ->
           Ban.get_owner(msg)
 
+        ">! help" ->
+          Help.help(msg)
+
+        ">! rules" ->
+          Rules.send_rules(msg)
+
+        ">! info" ->
+          Info.send_info(msg)
+
         # admin exclusive
 
         ">! ban" <> _ ->
+          # credo:disable-for-next-line
           Admin.permcheck(msg, fn -> Ban.ban(msg) end)
 
         ">! unban" <> _ ->
+          # credo:disable-for-next-line
           Admin.permcheck(msg, fn -> Ban.unban_command(msg) end)
 
         _ ->
