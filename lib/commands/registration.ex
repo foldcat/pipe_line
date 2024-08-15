@@ -75,8 +75,8 @@ defmodule PipeLine.Commands.Registration do
     end
   end
 
-  @spec register(Nostrum.Struct.Message) :: :ok
-  def register(msg) do
+  @spec insert_registration(Nostrum.Struct.Message) :: :ok
+  def insert_registration(msg) do
     guild_id = msg.guild_id
     channel_id = msg.channel_id
 
@@ -120,6 +120,48 @@ defmodule PipeLine.Commands.Registration do
             Logger.error("unknown error arising from registration attempt below:")
             log_registration(msg, false)
         end
+    end
+  end
+
+  @spec registeration_rate_limit() :: Nostrum.Struct.Embed.t()
+  def registeration_rate_limit do
+    %Nostrum.Struct.Embed{}
+    |> put_title("rate limited")
+    |> put_description(
+      "failed to register this guild as one guild may only register every 60 seconds"
+    )
+  end
+
+  @spec warn_reg_limit_exceeded(Nostrum.Struct.Message) :: :ok
+  def warn_reg_limit_exceeded(msg) do
+    Logger.info("""
+    not registering #{red() <> Integer.to_string(msg.guild_id) <> red()}
+    as limit is exceeded
+    """)
+
+    case(Hammer.check_rate("reg-channel-warn#{msg.author.id}", 5000, 1)) do
+      {:allow, _count} ->
+        Api.create_message(
+          msg.channel_id,
+          embeds: [registeration_rate_limit()],
+          message_reference: %{message_id: msg.id}
+        )
+
+      {:deny, _limit} ->
+        nil
+    end
+
+    :ok
+  end
+
+  @spec register(Nostrum.Struct.Message) :: :ok
+  def register(msg) do
+    case(Hammer.check_rate("register-chan#{msg.guild_id}", 60_000, 1)) do
+      {:allow, _count} ->
+        insert_registration(msg)
+
+      {:deny, _limit} ->
+        warn_reg_limit_exceeded(msg)
     end
 
     :ok
