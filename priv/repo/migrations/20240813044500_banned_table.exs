@@ -6,8 +6,6 @@ defmodule PipeLine.Database.Repo.Migrations.BannedTable do
   def up do
     create table(:banned, primary_key: false) do
       add(:user_id, :string, primary_key: true)
-      add(:until, :utc_datetime)
-      add(:perminant, :boolean)
     end
   end
 

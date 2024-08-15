@@ -4,44 +4,217 @@ defmodule PipeLine.Commands.Ban do
   """
 
   require Logger
+  import Ecto.Query
+  import Nostrum.Struct.Embed
+  import IO.ANSI
   alias Nostrum.Api
   alias PipeLine.Commands.Ban.OwnerCache
+  alias PipeLine.Database.Ban
+  alias PipeLine.Database.Repo
 
-  @doc """
-  Reply to target's message to ban them.
-  Manually inputting their user id also works.
-  In Discord one can specify the ban time, 
-  when left blank defaults to preminent
-  """
+  @spec banned?(String.t()) :: boolean
+  def banned?(target) do
+    not Enum.empty?(:ets.lookup(:ban, target))
+  end
+
+  @spec permabanned_embed(String.t()) :: Nostrum.Struct.Embed.t()
+  def permabanned_embed(target) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("permabanned")
+    |> put_description(target)
+  end
+
+  @spec already_banned_embed(String.t()) :: Nostrum.Struct.Embed.t()
+  def already_banned_embed(target) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("already banned")
+    |> put_description(target <> " is already banned")
+  end
+
+  @spec permaban(Nostrum.Struct.Message) :: :ok
+  def permaban(msg) do
+    target =
+      String.split(msg.content)
+      |> Enum.at(2)
+      |> String.trim()
+
+    if banned?(target) do
+      Api.create_message(
+        msg.channel_id,
+        embeds: [already_banned_embed(target)],
+        message_reference: %{message_id: msg.id}
+      )
+
+      Logger.info("""
+      failed to ban #{red() <> target <> reset()}
+      as they are already banned
+      """)
+    else
+      Repo.insert(%Ban{
+        user_id: target
+      })
+
+      :ets.insert(:ban, {target})
+
+      Api.create_message(
+        msg.channel_id,
+        embeds: [permabanned_embed(target)],
+        message_reference: %{message_id: msg.id}
+      )
+
+      Logger.info("""
+      permabanned #{red() <> target <> reset()}
+      """)
+
+      :ok
+    end
+  end
 
   @spec ban(Nostrum.Struct.Message) :: :ok
   def ban(msg) do
     input = String.split(msg.content)
 
-    Logger.info(Kernel.inspect(input))
+    if length(input) == 3 do
+      permaban(msg)
+    end
 
-    cond do
-      # admin simply replied to some message without
-      # specifying who or duration
-      # permaban the one in the reply
-      length(input) == 2 ->
-        ref = msg.message_reference
-        Logger.info(Kernel.inspect(msg))
+    :ok
+  end
 
-        if ref != nil do
-          Logger.info(Kernel.inspect(ref))
-          owner = OwnerCache.get_owner(Integer.to_string(ref.message_id))
-          Logger.info(Kernel.inspect(owner))
+  @spec unban(String.t()) :: :ok
+  def unban(id) do
+    query =
+      from b in Ban,
+        where: b.user_id == ^id,
+        select: b.user_id
 
-          if owner != nil do
-            Logger.info("got owner")
-            Logger.info(Kernel.inspect(owner))
-          else
-            Logger.info("did not owner")
-            {:ok, target_msg} = Api.get_channel_message(ref.channel_id, ref.message_id)
-            Logger.info(Kernel.inspect(target_msg.author.id))
-          end
-        end
+    Repo.delete_all(query)
+    :ets.delete(:ban, id)
+
+    :ok
+  end
+
+  @spec unban_success_embed(String.t()) :: Nostrum.Struct.Embed.t()
+  def unban_success_embed(id) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("success")
+    |> put_description(id <> " is unbanned")
+  end
+
+  @spec unban_fail_embed(String.t()) :: Nostrum.Struct.Embed.t()
+  def unban_fail_embed(id) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("fail")
+    |> put_description(id <> " is not banned")
+  end
+
+  @spec unban_command(Nostrum.Struct.Message) :: :ok
+  def unban_command(msg) do
+    target =
+      String.split(msg.content)
+      |> Enum.at(2)
+      |> String.trim()
+
+    if banned?(target) do
+      unban(target)
+
+      Api.create_message(
+        msg.channel_id,
+        embeds: [unban_success_embed(target)],
+        message_reference: %{message_id: msg.id}
+      )
+
+      Logger.info("""
+      unbanned #{green() <> target <> reset()}
+      """)
+    else
+      Api.create_message(
+        msg.channel_id,
+        embeds: [unban_fail_embed(target)],
+        message_reference: %{message_id: msg.id}
+      )
+    end
+
+    :ok
+  end
+
+  @spec ban_query_success(String.t()) :: Nostrum.Struct.Embed.t()
+  def ban_query_success(id) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("yes")
+    |> put_description(id <> " is banned")
+  end
+
+  @spec ban_query_fail(String.t()) :: Nostrum.Struct.Embed.t()
+  def ban_query_fail(id) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("no")
+    |> put_description(id <> " is not banned")
+  end
+
+  @spec banned_command(Nostrum.Struct.Message) :: :ok
+  def banned_command(msg) do
+    target =
+      String.split(msg.content)
+      |> Enum.at(3)
+      |> String.trim()
+
+    if banned?(target) do
+      Api.create_message(
+        msg.channel_id,
+        embeds: [ban_query_success(target)],
+        message_reference: %{message_id: msg.id}
+      )
+    else
+      Api.create_message(
+        msg.channel_id,
+        embeds: [ban_query_fail(target)],
+        message_reference: %{message_id: msg.id}
+      )
+    end
+
+    :ok
+  end
+
+  @spec get_owner_success(String.t()) :: Nostrum.Struct.Embed.t()
+  def get_owner_success(owner) do
+    %Nostrum.Struct.Embed{}
+    |> put_title("found owner")
+    |> put_description(owner)
+  end
+
+  @spec get_owner_fail() :: Nostrum.Struct.Embed.t()
+  def get_owner_fail do
+    %Nostrum.Struct.Embed{}
+    |> put_title("did not find owner")
+  end
+
+  @spec get_owner(Nostrum.Struct.Message) :: :ok
+  def get_owner(msg) do
+    ref = msg.message_reference
+
+    if ref != nil do
+      owner = OwnerCache.get_owner(Integer.to_string(ref.message_id))
+
+      if owner == nil do
+        Api.create_message(
+          msg.channel_id,
+          embeds: [get_owner_fail()],
+          message_reference: %{message_id: msg.id}
+        )
+      else
+        Api.create_message(
+          msg.channel_id,
+          embeds: [get_owner_success(owner)],
+          message_reference: %{message_id: msg.id}
+        )
+      end
+    else
+      Api.create_message(
+        msg.channel_id,
+        embeds: [get_owner_fail()],
+        message_reference: %{message_id: msg.id}
+      )
     end
 
     :ok

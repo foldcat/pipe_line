@@ -26,6 +26,8 @@ defmodule PipeLine.Init do
   use GenServer
   import Ecto.Query
   import IO.ANSI
+  alias PipeLine.Database.Admin
+  alias PipeLine.Database.Ban
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
   alias PipeLine.Database.Webhooks
@@ -47,6 +49,10 @@ defmodule PipeLine.Init do
     :ets.new(:chan_cache, [:set, :public, :named_table])
     # and the webhooks
     :ets.new(:webhook_cache, [:set, :public, :named_table])
+    # and the admins
+    :ets.new(:admin, [:set, :public, :named_table])
+    # and the bans
+    :ets.new(:ban, [:set, :public, :named_table])
 
     Logger.info(blue() <> "ets started, table created!" <> reset())
 
@@ -77,6 +83,28 @@ defmodule PipeLine.Init do
       :ets.insert(
         :webhook_cache,
         {wh.channel_id, %{webhook_id: wh.webhook_id, webhook_token: wh.webhook_token}}
+      )
+    end)
+
+    query_bans = from(Ban)
+
+    bans = Repo.all(query_bans)
+
+    Enum.each(bans, fn banned ->
+      :ets.insert(
+        :ban,
+        {banned.user_id}
+      )
+    end)
+
+    query_admin = from(Admin)
+
+    admins = Repo.all(query_admin)
+
+    Enum.each(admins, fn admin ->
+      :ets.insert(
+        :admin,
+        {admin.user_id}
       )
     end)
 
@@ -111,6 +139,7 @@ defmodule PipeLine.Core do
   """
   use Nostrum.Consumer
   require Logger
+  alias PipeLine.Commands.Admin
   alias PipeLine.Commands.Ban
   alias PipeLine.Commands.Cache
   alias PipeLine.Commands.Clist
@@ -139,8 +168,22 @@ defmodule PipeLine.Core do
         ">! cached?" ->
           Cache.cached?(msg)
 
+        ">! admin?" ->
+          Admin.am_i_admin?(msg)
+
+        ">! is banned" <> _ ->
+          Ban.banned_command(msg)
+
+        ">! getowner" ->
+          Ban.get_owner(msg)
+
+        # admin exclusive
+
         ">! ban" <> _ ->
-          Ban.ban(msg)
+          Admin.permcheck(msg, fn -> Ban.ban(msg) end)
+
+        ">! unban" <> _ ->
+          Admin.permcheck(msg, fn -> Ban.unban_command(msg) end)
 
         _ ->
           :noop

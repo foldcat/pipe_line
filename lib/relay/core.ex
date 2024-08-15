@@ -4,6 +4,7 @@ defmodule PipeLine.Relay.Core do
   to multiple Discord channels.
   """
   alias Nostrum.Api
+  alias PipeLine.Commands.Ban
   alias PipeLine.Relay.Censor
   alias PipeLine.Relay.ReplyCache
   alias PipeLine.Relay.Webhook
@@ -25,7 +26,7 @@ defmodule PipeLine.Relay.Core do
     |> put_description("you have exceeded the 1 edit per 5 seconds rate limit")
   end
 
-  @spec warn_relay_limit_exceeded(Nostrum.Struct.Message, integer) :: :ok
+  @spec warn_relay_limit_exceeded(Nostrum.Struct.Message, String.t()) :: :ok
   def warn_relay_limit_exceeded(msg, author_id) do
     Logger.info("""
     not relaying #{red() <> Integer.to_string(msg.id) <> red()}
@@ -110,21 +111,21 @@ defmodule PipeLine.Relay.Core do
     # said message is inside registered channel list
     if not Enum.empty?(cache_lookup) do
       pipe_msg(msg, Integer.to_string(msg.channel_id))
-    end
 
-    Logger.info("""
-    relayed #{blue() <> msg.author.global_name <> reset()}'s message:
-    #{green() <> msg.content <> reset()}
-    """)
+      Logger.info("""
+      relayed #{blue() <> msg.author.global_name <> reset()}'s message:
+      #{green() <> msg.content <> reset()}
+      """)
+    end
 
     :ok
   end
 
   @spec relay_msg(Nostrum.Struct.Message) :: :ok
   def relay_msg(msg) do
-    author_id = msg.author.id
+    author_id = Integer.to_string(msg.author.id)
 
-    if msg.author.bot == nil do
+    if msg.author.bot == nil and not Ban.banned?(author_id) do
       case(Hammer.check_rate("relay-msg#{author_id}", 5000, 2)) do
         {:allow, _count} ->
           cache_lookup =
