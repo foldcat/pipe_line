@@ -123,7 +123,7 @@ defmodule PipeLine.Init do
     children = [
       PipeLine.Core,
       PipeLine.Relay.Censor,
-      PipeLine.Relay.ReplyCache,
+      PipeLine.Relay.RelayCache,
       PipeLine.Relay.Delete.Lock,
       PipeLine.Commands.Ban.OwnerCache
     ]

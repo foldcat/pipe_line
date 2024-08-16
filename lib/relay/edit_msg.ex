@@ -3,7 +3,7 @@ defmodule PipeLine.Relay.EditMsg do
   Handles editing of messages.
   """
   alias Nostrum.Api
-  alias PipeLine.Relay.ReplyCache
+  alias PipeLine.Relay.RelayCache
   require Logger
   import IO.ANSI
   import Nostrum.Struct.Embed
@@ -43,7 +43,7 @@ defmodule PipeLine.Relay.EditMsg do
 
     case(Hammer.check_rate("edit-msg#{author_id}", 10_000, 1)) do
       {:allow, _count} ->
-        targets = ReplyCache.get_messages(Integer.to_string(newmsg.id))
+        targets = RelayCache.get_messages(Integer.to_string(newmsg.id))
 
         Enum.each(
           targets,

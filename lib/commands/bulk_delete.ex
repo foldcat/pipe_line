@@ -6,7 +6,7 @@ defmodule PipeLine.Commands.BulkDelete do
   require Logger
   alias Nostrum.Api
   alias PipeLine.Relay.Delete.Lock
-  alias PipeLine.Relay.ReplyCache
+  alias PipeLine.Relay.RelayCache
 
   # what even is this
 
@@ -71,7 +71,7 @@ defmodule PipeLine.Commands.BulkDelete do
     |> Enum.map(&Task.await/1)
   end
 
-  @spec bulk_delete(integer, ReplyCache) :: :ok
+  @spec bulk_delete(integer, RelayCache) :: :ok
   def bulk_delete(amount, state) do
     Lock.engage()
 
@@ -129,7 +129,7 @@ defmodule PipeLine.Commands.BulkDelete do
       |> String.trim()
       |> String.to_integer()
 
-    ReplyCache.bulk_delete(amount)
+    RelayCache.bulk_delete(amount)
 
     :ok
   end

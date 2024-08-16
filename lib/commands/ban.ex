@@ -224,7 +224,7 @@ end
 defmodule PipeLine.Commands.Ban.OwnerCache do
   @moduledoc """
   GenServer module caches owner of webhook messages.
-  Very similar to `PipeLine.Relay.ReplyCache` 
+  Very similar to `PipeLine.Relay.RelayCache` 
   but I sometimes do not adhere to DRY.
   """
   use GenServer

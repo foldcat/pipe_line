@@ -1,11 +1,11 @@
-defmodule PipeLine.Relay.ReplyCache do
+defmodule PipeLine.Relay.RelayCache do
   @moduledoc """
   Caches set number of replies.
   """
   use GenServer
   require Logger
   alias PipeLine.Commands.BulkDelete
-  alias PipeLine.Relay.ReplyCache
+  alias PipeLine.Relay.RelayCache
   import IO.ANSI
 
   @doc """
@@ -22,7 +22,7 @@ defmodule PipeLine.Relay.ReplyCache do
   def start_link(_) do
     GenServer.start_link(
       __MODULE__,
-      %ReplyCache{
+      %RelayCache{
         msg_order: [],
         webhook_ids: %{},
         channel_id: %{},
@@ -51,7 +51,7 @@ defmodule PipeLine.Relay.ReplyCache do
           |> Enum.reverse()
           |> List.first()
 
-        %ReplyCache{
+        %RelayCache{
           msg_order: [message_id | state.msg_order |> Enum.reverse() |> tl() |> Enum.reverse()],
           webhook_ids:
             state.webhook_ids
@@ -64,7 +64,7 @@ defmodule PipeLine.Relay.ReplyCache do
           max_size: state.max_size
         }
       else
-        %ReplyCache{
+        %RelayCache{
           msg_order: [message_id | state.msg_order],
           webhook_ids: Map.put(state.webhook_ids, message_id, webhook_msgs),
           channel_id: Map.put(state.channel_id, message_id, channel_id),
@@ -92,7 +92,7 @@ defmodule PipeLine.Relay.ReplyCache do
     new_msg_order = Enum.drop(state.msg_order, amount)
 
     {:noreply,
-     %ReplyCache{
+     %RelayCache{
        msg_order: new_msg_order,
        webhook_ids: new_webhook_ids,
        channel_id: new_channel_id,
@@ -126,7 +126,7 @@ defmodule PipeLine.Relay.ReplyCache do
     GenServer.call(__MODULE__, {:get, message_id})
   end
 
-  @spec get_state() :: ReplyCache
+  @spec get_state() :: RelayCache
   def get_state do
     GenServer.call(__MODULE__, {:get_state})
   end

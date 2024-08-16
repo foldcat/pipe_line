@@ -6,7 +6,7 @@ defmodule PipeLine.Relay.Core do
   alias Nostrum.Api
   alias PipeLine.Commands.Ban
   alias PipeLine.Relay.Censor
-  alias PipeLine.Relay.ReplyCache
+  alias PipeLine.Relay.RelayCache
   alias PipeLine.Relay.Webhook
   require Logger
   import IO.ANSI
@@ -104,7 +104,7 @@ defmodule PipeLine.Relay.Core do
       end)
       |> Enum.filter(fn item -> item != nil end)
 
-    ReplyCache.cache_message(msg, webhook_ids)
+    RelayCache.cache_message(msg, webhook_ids)
 
     :ok
   end

@@ -6,11 +6,11 @@ defmodule PipeLine.Relay.Delete do
   require Logger
   import IO.ANSI
   alias Nostrum.Api
-  alias PipeLine.Relay.ReplyCache
+  alias PipeLine.Relay.RelayCache
 
   @spec delete_impl(String.t()) :: :ok
   def delete_impl(id) do
-    targets = ReplyCache.get_messages(id)
+    targets = RelayCache.get_messages(id)
 
     if not (targets == nil) do
       Enum.each(
