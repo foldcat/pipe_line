@@ -33,7 +33,7 @@ defmodule PipeLine.Relay.Censor do
 
   @spec allowed_chars() :: String.t()
   def allowed_chars do
-    "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "
+    "\n!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "
   end
 
   @spec emoji?(String.t()) :: boolean

@@ -41,6 +41,36 @@ defmodule PipeLine.Relay.Core do
     :ok
   end
 
+  @spec truncate(String.t()) :: String.t()
+  def truncate(content) do
+    if String.length(content) > 10 do
+      fmt =
+        String.slice(content, 0..10)
+        |> String.replace("\n", " ")
+
+      "#{fmt}..."
+    else
+      content
+    end
+  end
+
+  @doc """
+  Formats a reply. 
+  Returns empty string if there are none.
+  """
+  @spec format_reply(Nostrum.Struct.Message) :: String.t()
+  def format_reply(msg) do
+    ref = msg.referenced_message
+
+    if ref == nil do
+      ""
+    else
+      author = ref.author.global_name
+
+      "-# replying to #{author} :: #{truncate(ref.content)} \n"
+    end
+  end
+
   @doc """
   `pipe_single_msg` takes a message object and sends it 
   to every channel that is registered BUT the channel 
@@ -49,6 +79,8 @@ defmodule PipeLine.Relay.Core do
   @spec pipe_msg(Nostrum.Struct.Message, String.t()) :: :ok
   def pipe_msg(msg, from_channel) do
     cache_lookup = :ets.tab2list(:chan_cache)
+
+    reply_format = format_reply(msg)
 
     webhook_ids =
       Enum.map(cache_lookup, fn {chanid} ->
@@ -67,7 +99,7 @@ defmodule PipeLine.Relay.Core do
             |> Censor.replace_unicode()
             |> Censor.sanitize()
 
-          Webhook.relay_message(msg, chanid, santized_content)
+          Webhook.relay_message(msg, chanid, reply_format <> santized_content)
         end
       end)
       |> Enum.filter(fn item -> item != nil end)
