@@ -4,6 +4,7 @@ defmodule PipeLine.Relay.ReplyCache do
   """
   use GenServer
   require Logger
+  alias PipeLine.Commands.BulkDelete
   alias PipeLine.Relay.ReplyCache
   import IO.ANSI
 
@@ -16,14 +17,15 @@ defmodule PipeLine.Relay.ReplyCache do
   Note that the first item of the list is the 
   latest message and the last item is the oldest.
   """
-  defstruct list: [], map: %{}, max_size: 10
+  defstruct msg_order: [], webhook_ids: %{}, channel_id: %{}, max_size: 10
 
   def start_link(_) do
     GenServer.start_link(
       __MODULE__,
       %ReplyCache{
-        list: [],
-        map: %{},
+        msg_order: [],
+        webhook_ids: %{},
+        channel_id: %{},
         max_size: Application.fetch_env!(:pipe_line, :max_msg_cache_size)
       },
       name: __MODULE__
@@ -40,28 +42,32 @@ defmodule PipeLine.Relay.ReplyCache do
     {:ok, state}
   end
 
-  def handle_cast({:cache, message_id, webhook_msgs}, state) do
-    # if size is 10 pop it
+  def handle_cast({:cache, message_id, webhook_msgs, channel_id}, state) do
     new_state =
-      if length(state.list) >= state.max_size do
+      if length(state.msg_order) >= state.max_size do
         # object to be deleted
         discard_obj =
-          state.list
+          state.msg_order
           |> Enum.reverse()
           |> List.first()
 
         %ReplyCache{
-          list: [message_id | state.list |> Enum.reverse() |> tl() |> Enum.reverse()],
-          map:
-            state.map
+          msg_order: [message_id | state.msg_order |> Enum.reverse() |> tl() |> Enum.reverse()],
+          webhook_ids:
+            state.webhook_ids
             |> Map.delete(discard_obj)
             |> Map.put(message_id, webhook_msgs),
+          channel_id:
+            state.channel_id
+            |> Map.delete(discard_obj)
+            |> Map.put(message_id, channel_id),
           max_size: state.max_size
         }
       else
         %ReplyCache{
-          list: [message_id | state.list],
-          map: Map.put(state.map, message_id, webhook_msgs),
+          msg_order: [message_id | state.msg_order],
+          webhook_ids: Map.put(state.webhook_ids, message_id, webhook_msgs),
+          channel_id: Map.put(state.channel_id, message_id, channel_id),
           max_size: state.max_size
         }
       end
@@ -74,20 +80,59 @@ defmodule PipeLine.Relay.ReplyCache do
     {:noreply, new_state}
   end
 
+  def handle_cast({:bulk_delete, amount}, state) do
+    BulkDelete.bulk_delete(amount, state)
+
+    delete_targets =
+      state.msg_order
+      |> Enum.take(amount)
+
+    new_webhook_ids = Map.drop(state.webhook_ids, [delete_targets])
+    new_channel_id = Map.drop(state.channel_id, [delete_targets])
+    new_msg_order = Enum.drop(state.msg_order, amount)
+
+    {:noreply,
+     %ReplyCache{
+       msg_order: new_msg_order,
+       webhook_ids: new_webhook_ids,
+       channel_id: new_channel_id,
+       max_size: state.max_size
+     }}
+  end
+
   def handle_call({:get, message_id}, _from, state) do
-    {:reply, Map.get(state.map, message_id), state}
+    {:reply, Map.get(state.webhook_ids, message_id), state}
+  end
+
+  def handle_call({:get_state}, _from, state) do
+    {:reply, state, state}
   end
 
   @spec cache_message(Nostrum.Struct.Message, list(String.t())) :: :ok
   def cache_message(msg, webhook_msgs) do
     GenServer.cast(
       __MODULE__,
-      {:cache, Integer.to_string(msg.id), webhook_msgs}
+      {
+        :cache,
+        Integer.to_string(msg.id),
+        webhook_msgs,
+        Integer.to_string(msg.channel_id)
+      }
     )
   end
 
   @spec get_messages(String.t()) :: {list(String.t()), String.t()} | nil
   def get_messages(message_id) do
     GenServer.call(__MODULE__, {:get, message_id})
+  end
+
+  @spec get_state() :: ReplyCache
+  def get_state do
+    GenServer.call(__MODULE__, {:get_state})
+  end
+
+  @spec bulk_delete(integer) :: :ok
+  def bulk_delete(amount) do
+    GenServer.cast(__MODULE__, {:bulk_delete, amount})
   end
 end

@@ -124,6 +124,7 @@ defmodule PipeLine.Init do
       PipeLine.Core,
       PipeLine.Relay.Censor,
       PipeLine.Relay.ReplyCache,
+      PipeLine.Relay.Delete.Lock,
       PipeLine.Commands.Ban.OwnerCache
     ]
 
@@ -141,6 +142,7 @@ defmodule PipeLine.Core do
   require Logger
   alias PipeLine.Commands.Admin
   alias PipeLine.Commands.Ban
+  alias PipeLine.Commands.BulkDelete
   alias PipeLine.Commands.Cache
   alias PipeLine.Commands.Clist
   alias PipeLine.Commands.Help
@@ -202,6 +204,10 @@ defmodule PipeLine.Core do
           # credo:disable-for-next-line
           Admin.permcheck(msg, fn -> Ban.unban_command(msg) end)
 
+        ">! purge" <> _ ->
+          # credo:disable-for-next-line
+          Admin.permcheck(msg, fn -> BulkDelete.bulk_delete_cmd(msg) end)
+
         _ ->
           :noop
       end
@@ -216,10 +222,12 @@ defmodule PipeLine.Core do
 
   def handle_event({:MESSAGE_DELETE, msg, _ws_state}) do
     Task.start(fn ->
-      Delete.delete(
-        Integer.to_string(msg.id),
-        Integer.to_string(msg.channel_id)
-      )
+      if not Delete.Lock.engaged?() do
+        Delete.delete(
+          Integer.to_string(msg.id),
+          Integer.to_string(msg.channel_id)
+        )
+      end
     end)
   end
 end

@@ -52,3 +52,36 @@ defmodule PipeLine.Relay.Delete do
     end
   end
 end
+
+defmodule PipeLine.Relay.Delete.Lock do
+  @moduledoc """
+  With lock engaged delete will become 
+  noop functions.
+  """
+  use GenServer
+
+  def start_link(_) do
+    # false: disengaged
+    GenServer.start_link(__MODULE__, false, name: __MODULE__)
+  end
+
+  def init(state), do: {:ok, state}
+
+  def handle_cast(:engage, _) do
+    {:noreply, true}
+  end
+
+  def handle_cast(:disengage, _) do
+    {:noreply, false}
+  end
+
+  def handle_call(:engaged?, _from, state) do
+    {:reply, state, state}
+  end
+
+  def engage, do: GenServer.cast(__MODULE__, :engage)
+  def disengage, do: GenServer.cast(__MODULE__, :disengage)
+
+  @spec engaged?() :: boolean
+  def engaged?, do: GenServer.call(__MODULE__, :engaged?)
+end
