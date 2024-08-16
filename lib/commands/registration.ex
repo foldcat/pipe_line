@@ -7,6 +7,7 @@ defmodule PipeLine.Commands.Registration do
   alias Nostrum.Cache.GuildCache
   alias Nostrum.Cache.MemberCache
   alias Nostrum.Struct.Guild.Member
+  alias PipeLine.Commands.Info
   alias PipeLine.Database.Registration
   alias PipeLine.Database.Repo
   alias PipeLine.Relay.Webhook
@@ -124,6 +125,8 @@ defmodule PipeLine.Commands.Registration do
               embeds: [registeration_success_embed(Integer.to_string(channel_id))],
               message_reference: %{message_id: msg.id}
             )
+
+            Info.send_info(msg)
 
             log_registration(msg, true)
 

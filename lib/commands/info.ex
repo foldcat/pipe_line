@@ -14,7 +14,10 @@ defmodule PipeLine.Commands.Info do
     - we only relay ASCII symbols
     - we only relay a subset of built in emoji
     - some words are implicitly censored
-    - delete and edit does not work on old messages
+    - delete and edit may not work on old messages
+    - message relayed may be altered in-transport
+    - this message may be changed without prior notice
+    - relaying any messages means you have understood the rules (see `>! rules`)
     """)
   end
 
