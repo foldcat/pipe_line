@@ -29,6 +29,10 @@ iex -S mix
 
 The bot's prefix is `>!`. Execute `>! help` and `>! info` for the manual.
 
+To register admin, run `PipeLine.Commands.Admin.register_admin_iex("userid")` in
+iex to do just that. `PipeLine.Commands.Admin.delete_admin_iex("userid")` exists
+in case you regret your decision.
+
 # Config 
 
 We do not include a `config/config.exs` due to the inclusion of a token.
