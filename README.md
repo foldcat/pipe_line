@@ -20,7 +20,7 @@ mix ecto.migrate
 After that, PipeLine is ready.
 
 ```bash 
-mix run 
+mix run --no-halt
 # or 
 iex -S mix
 ```
