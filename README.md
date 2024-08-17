@@ -55,6 +55,10 @@ config :pipe_line,
 
 config :pipe_line, PipeLine.Database.Repo, database: "./database.db"
 
+# whitelist of bots that gets their messages relayed
+config :pipe_line,
+  allowed_bots: ["1053015370115588147"]
+
 # config the cache size to prevent excessive memory usage  
 
 # influence how many messages can be edited and deleted

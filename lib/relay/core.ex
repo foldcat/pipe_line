@@ -138,25 +138,42 @@ defmodule PipeLine.Relay.Core do
     :ok
   end
 
+  def allowed_bots do
+    Application.fetch_env!(:pipe_line, :allowed_bots)
+  end
+
   @spec relay_msg(Nostrum.Struct.Message) :: :ok
   def relay_msg(msg) do
     author_id = Integer.to_string(msg.author.id)
 
-    if msg.author.bot == nil and not Ban.banned?(author_id) do
-      case(Hammer.check_rate("relay-msg#{author_id}", 5000, 2)) do
-        {:allow, _count} ->
-          cache_lookup =
-            :ets.lookup(
-              :chan_cache,
-              Integer.to_string(msg.channel_id)
-            )
+    cond do
+      msg.author.bot == nil and not Ban.banned?(author_id) ->
+        case(Hammer.check_rate("relay-msg#{author_id}", 5000, 2)) do
+          {:allow, _count} ->
+            cache_lookup =
+              :ets.lookup(
+                :chan_cache,
+                Integer.to_string(msg.channel_id)
+              )
 
-          # said message is inside registered channel list
-          relay_all(msg, cache_lookup)
+            # said message is inside registered channel list
+            relay_all(msg, cache_lookup)
 
-        {:deny, _limit} ->
-          warn_relay_limit_exceeded(msg, author_id)
-      end
+          {:deny, _limit} ->
+            warn_relay_limit_exceeded(msg, author_id)
+        end
+
+      Integer.to_string(msg.author.id) in allowed_bots() ->
+        cache_lookup =
+          :ets.lookup(
+            :chan_cache,
+            Integer.to_string(msg.channel_id)
+          )
+
+        relay_all(msg, cache_lookup)
+
+      true ->
+        :noop
     end
 
     :ok
