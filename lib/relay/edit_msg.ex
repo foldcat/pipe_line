@@ -51,38 +51,47 @@ defmodule PipeLine.Relay.EditMsg do
     :ok
   end
 
+  @spec update_all({[String.t()], String.t()}, Nostrum.Struct.Message) :: :ok
+  def update_all(targets, newmsg) do
+    Enum.each(
+      targets,
+      fn ws_msg ->
+        [{_chanid, webhook_info}] =
+          :ets.lookup(:webhook_cache, ws_msg.channel_id)
+
+        Api.edit_webhook_message(
+          webhook_info.webhook_id,
+          webhook_info.webhook_token,
+          ws_msg.message_id,
+          %{
+            content: newmsg.content
+          }
+        )
+      end
+    )
+
+    :ok
+  end
+
   @spec update_msg_impl(Nostrum.Struct.Message) :: :ok
   def update_msg_impl(newmsg) do
     author_id = newmsg.author.id
 
-    case(Hammer.check_rate("edit-msg#{author_id}", 10_000, 1)) do
-      {:allow, _count} ->
-        targets = RelayCache.get_messages(Integer.to_string(newmsg.id))
+    targets = RelayCache.get_messages(Integer.to_string(newmsg.id))
 
-        Enum.each(
-          targets,
-          fn ws_msg ->
-            [{_chanid, webhook_info}] =
-              :ets.lookup(:webhook_cache, ws_msg.channel_id)
+    if targets != nil do
+      case(Hammer.check_rate("edit-msg#{author_id}", 10_000, 1)) do
+        {:allow, _count} ->
+          update_all(targets, newmsg)
 
-            Api.edit_webhook_message(
-              webhook_info.webhook_id,
-              webhook_info.webhook_token,
-              ws_msg.message_id,
-              %{
-                content: newmsg.content
-              }
-            )
-          end
-        )
+          Logger.info("""
+          relayed #{blue() <> newmsg.author.global_name <> reset()}'s edit:
+          #{green() <> newmsg.content <> reset()}
+          """)
 
-        Logger.info("""
-        relayed #{blue() <> newmsg.author.global_name <> reset()}'s edit:
-        #{green() <> newmsg.content <> reset()}
-        """)
-
-      {:deny, _limit} ->
-        warn_edit_limit_exceeded(newmsg, author_id)
+        {:deny, _limit} ->
+          warn_edit_limit_exceeded(newmsg, author_id)
+      end
     end
   end
 
