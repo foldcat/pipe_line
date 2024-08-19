@@ -80,8 +80,18 @@ defmodule PipeLine.Relay.Core do
       ""
     else
       author = ref.author.global_name
+      username = ref.author.username
 
-      "-# replying to #{author} :: #{truncate(ref.content)} \n"
+      cond do
+        author != nil ->
+          "-# replying to #{author} :: #{truncate(ref.content)} \n"
+
+        username != nil ->
+          "-# replying to #{username} :: #{truncate(ref.content)} \n"
+
+        true ->
+          "-# replying to [unknown user] :: #{truncate(ref.content)} \n"
+      end
     end
   end
 
