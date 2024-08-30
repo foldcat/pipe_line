@@ -65,6 +65,10 @@ config :pipe_line,
 config :pipe_line,
   max_msg_cache_size: 500
 
+# change how frequently channel activity is decayed (the more channels tracked, the lower this should be, to save memory)
+config :pipe_line,
+  activity_decay_ms: 30 * 1000
+
 # influence how many messages which it's author's id can be queried `>! getowner` command
 config :pipe_line,
   max_owner_cache_size: 500

@@ -43,7 +43,8 @@ defmodule PipeLine.MixProject do
       {:hammer, "~> 6.1"},
       {:ecto_sqlite3, "~> 0.16"},
       {:ecto, "~> 3.10"},
-      {:expletive, "~> 0.1.5"}
+      {:expletive, "~> 0.1.5"},
+      {:heap, "~> 3.0.0"}
     ]
   end
 end
