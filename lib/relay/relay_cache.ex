@@ -31,7 +31,9 @@ defmodule PipeLine.Relay.RelayCache do
   Note that the first item of the list is the 
   latest message and the last item is the oldest.
   """
-  defstruct msg_order: [], webhook_ids: %{}, channel_id: %{}, max_size: 10
+  @max_size Application.compile_env!(:pipe_line, :max_msg_cache_size)
+
+  defstruct msg_order: [], webhook_ids: %{}, channel_id: %{}
 
   def start_link(_) do
     GenServer.start_link(
@@ -39,8 +41,7 @@ defmodule PipeLine.Relay.RelayCache do
       %RelayCache{
         msg_order: [],
         webhook_ids: %{},
-        channel_id: %{},
-        max_size: Application.fetch_env!(:pipe_line, :max_msg_cache_size)
+        channel_id: %{}
       },
       name: __MODULE__
     )
@@ -50,7 +51,7 @@ defmodule PipeLine.Relay.RelayCache do
     Logger.info("""
       starting reply cache 
       pid: #{red() <> Kernel.inspect(self()) <> reset()}
-      max size: #{blue() <> Integer.to_string(state.max_size) <> reset()}
+      max size: #{blue() <> Integer.to_string(@max_size) <> reset()}
     """)
 
     {:ok, state}
@@ -58,7 +59,7 @@ defmodule PipeLine.Relay.RelayCache do
 
   def handle_cast({:cache, message_id, webhook_msgs, channel_id}, state) do
     new_state =
-      if length(state.msg_order) >= state.max_size do
+      if length(state.msg_order) >= @max_size do
         # object to be deleted
         discard_obj =
           state.msg_order
@@ -74,15 +75,13 @@ defmodule PipeLine.Relay.RelayCache do
           channel_id:
             state.channel_id
             |> Map.delete(discard_obj)
-            |> Map.put(message_id, channel_id),
-          max_size: state.max_size
+            |> Map.put(message_id, channel_id)
         }
       else
         %RelayCache{
           msg_order: [message_id | state.msg_order],
           webhook_ids: Map.put(state.webhook_ids, message_id, webhook_msgs),
-          channel_id: Map.put(state.channel_id, message_id, channel_id),
-          max_size: state.max_size
+          channel_id: Map.put(state.channel_id, message_id, channel_id)
         }
       end
 
@@ -109,8 +108,7 @@ defmodule PipeLine.Relay.RelayCache do
      %RelayCache{
        msg_order: new_msg_order,
        webhook_ids: new_webhook_ids,
-       channel_id: new_channel_id,
-       max_size: state.max_size
+       channel_id: new_channel_id
      }}
   end
 

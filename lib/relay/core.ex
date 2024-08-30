@@ -27,6 +27,8 @@ defmodule PipeLine.Relay.Core do
   import IO.ANSI
   import Nostrum.Struct.Embed
 
+  @allowed_bots Application.compile_env!(:pipe_line, :allowed_bots)
+
   @spec relay_ratelimit_exceeded() :: Nostrum.Struct.Embed.t()
   def relay_ratelimit_exceeded do
     %Nostrum.Struct.Embed{}
@@ -163,10 +165,6 @@ defmodule PipeLine.Relay.Core do
     :ok
   end
 
-  def allowed_bots do
-    Application.fetch_env!(:pipe_line, :allowed_bots)
-  end
-
   @spec relay_msg(Nostrum.Struct.Message) :: :ok
   def relay_msg(msg) do
     author_id = Integer.to_string(msg.author.id)
@@ -188,7 +186,7 @@ defmodule PipeLine.Relay.Core do
             warn_relay_limit_exceeded(msg, author_id)
         end
 
-      Integer.to_string(msg.author.id) in allowed_bots() ->
+      Integer.to_string(msg.author.id) in @allowed_bots ->
         cache_lookup =
           :ets.lookup(
             :chan_cache,

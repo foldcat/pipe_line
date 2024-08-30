@@ -22,7 +22,7 @@ defmodule PipeLine.Relay.Tracker do
   import IO.ANSI
 
   # in milliseconds
-  @activity_decay Application.compile_env(:pipe_line, :activity_decay_ms)
+  @activity_decay Application.compile_env!(:pipe_line, :activity_decay_ms)
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)

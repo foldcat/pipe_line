@@ -245,33 +245,34 @@ defmodule PipeLine.Commands.Ban.OwnerCache do
   import IO.ANSI
   require Logger
 
+  @max_size Application.compile_env!(:pipe_line, :max_owner_cache_size)
+
   def start_link(_) do
     GenServer.start_link(
       __MODULE__,
       {
         [],
-        %{},
-        Application.fetch_env!(:pipe_line, :max_owner_cache_size)
+        %{}
       },
       name: __MODULE__
     )
   end
 
   def init(state) do
-    {_, _, max_size} = state
+    {_, _} = state
 
     Logger.info("""
       starting websocket message owner cache 
       pid: #{red() <> Kernel.inspect(self()) <> reset()}
-      max size: #{blue() <> Integer.to_string(max_size) <> reset()}
+      max size: #{blue() <> Integer.to_string(@max_size) <> reset()}
     """)
 
     {:ok, state}
   end
 
-  def handle_cast({:cache, webhook_id, owner_id}, {list, map, max_size}) do
+  def handle_cast({:cache, webhook_id, owner_id}, {list, map}) do
     new_state =
-      if length(list) >= max_size do
+      if length(list) >= @max_size do
         # object to be deleted
         discard_obj =
           list
@@ -282,14 +283,12 @@ defmodule PipeLine.Commands.Ban.OwnerCache do
           [webhook_id | list |> Enum.reverse() |> tl() |> Enum.reverse()],
           map
           |> Map.delete(discard_obj)
-          |> Map.put(webhook_id, owner_id),
-          max_size
+          |> Map.put(webhook_id, owner_id)
         }
       else
         {
           [webhook_id | list],
-          Map.put(map, webhook_id, owner_id),
-          max_size
+          Map.put(map, webhook_id, owner_id)
         }
       end
 
@@ -302,7 +301,7 @@ defmodule PipeLine.Commands.Ban.OwnerCache do
   end
 
   def handle_call({:get, message_id}, _from, state) do
-    {_, map, _} = state
+    {_, map} = state
     {:reply, Map.get(map, message_id), state}
   end
 

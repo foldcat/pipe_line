@@ -20,19 +20,19 @@ defmodule PipeLine.Relay.Censor do
   require Logger
   import IO.ANSI
 
+  @blacklist Application.compile_env!(:pipe_line, :blacklist)
+
   def start_link(_state) do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def init(_state) do
-    blacklist = Application.fetch_env!(:pipe_line, :blacklist)
-
     Logger.info("""
       starting censorship
       pid: #{red() <> Kernel.inspect(self()) <> reset()}
     """)
 
-    {:ok, Expletive.configure(blacklist: blacklist)}
+    {:ok, Expletive.configure(blacklist: @blacklist)}
   end
 
   def handle_call(:get, _from, state) do

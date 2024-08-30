@@ -20,15 +20,12 @@ defmodule PipeLine.Commands.Rules do
   import Nostrum.Struct.Embed
   alias Nostrum.Api
 
-  @spec get_rules() :: list(String.t())
-  def get_rules do
-    Application.fetch_env!(:pipe_line, :rules)
-  end
+  @rules Application.compile_env!(:pipe_line, :rules)
 
   @spec rules_embed() :: Nostrum.Struct.Embed.t()
   def rules_embed do
     rules =
-      get_rules()
+      @rules
       |> Enum.with_index()
       |> Enum.map(fn {rule, index} ->
         {rule, index + 1}
