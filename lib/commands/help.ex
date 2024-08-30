@@ -37,7 +37,7 @@ defmodule PipeLine.Commands.Help do
       ### admin commands
       `>! ban <userid>`  permabans <userid> 
       `>! unban <userid>`  unbans <userid>
-      `>! purge <amount>`  bulk delete <amount> recent messages
+      `>! purge <amount>`  bulk delete <amount> recent messages, where <amount> must be greater than 1
       
       ### debug commands 
       `>! ping`  see if this bot is online 

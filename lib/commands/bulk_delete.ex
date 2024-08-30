@@ -18,6 +18,7 @@ defmodule PipeLine.Commands.BulkDelete do
   """
 
   require Logger
+  import Nostrum.Struct.Embed
   alias Nostrum.Api
   alias PipeLine.Relay.Delete.Lock
   alias PipeLine.Relay.RelayCache
@@ -134,6 +135,13 @@ defmodule PipeLine.Commands.BulkDelete do
     Lock.disengage()
   end
 
+  @spec purge_fail() :: Nostrum.Struct.Embed.t()
+  def purge_fail do
+    %Nostrum.Struct.Embed{}
+    |> put_title("unable to purge")
+    |> put_description("you may only purge more than one message")
+  end
+
   @spec bulk_delete_cmd(Nostrum.Struct.Message) :: :ok
   def bulk_delete_cmd(msg) do
     ">! purge" <> amount_ = msg.content
@@ -143,7 +151,15 @@ defmodule PipeLine.Commands.BulkDelete do
       |> String.trim()
       |> String.to_integer()
 
-    RelayCache.bulk_delete(amount)
+    if amount <= 1 do
+      Api.create_message(
+        msg.channel_id,
+        embeds: [purge_fail()],
+        message_reference: %{message_id: msg.id}
+      )
+    else
+      RelayCache.bulk_delete(amount)
+    end
 
     :ok
   end
