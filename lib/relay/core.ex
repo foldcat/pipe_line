@@ -108,10 +108,13 @@ defmodule PipeLine.Relay.Core do
     reply_format = format_reply(msg)
 
     _ = Tracker.update_channel("#{from_channel}", 1)
-    Logger.info("cache result: #{inspect(cache_lookup |> Enum.map(fn {item} -> item end))}")
-    Logger.info("flat? #{inspect(cache_lookup |> Enum.map(fn {item} -> item end) |> Tracker.get_merged_channel_list() )}")
+    Logger.debug("cache result: #{inspect(cache_lookup |> Enum.map(fn {item} -> item end))}")
 
-    Logger.info(
+    Logger.debug(
+      "flat? #{inspect(cache_lookup |> Enum.map(fn {item} -> item end) |> Tracker.get_merged_channel_list())}"
+    )
+
+    Logger.debug(
       "merged channel list: #{inspect(cache_lookup |> Tracker.get_merged_channel_list())}"
     )
 

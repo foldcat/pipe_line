@@ -34,6 +34,7 @@ defmodule PipeLine.Relay.Tracker do
       pid: #{red() <> Kernel.inspect(self()) <> reset()}
       activity lifespan: #{blue() <> "#{Float.to_string(@activity_decay / 1000.0)} seconds" <> reset()}
     """)
+
     {:ok, state}
   end
 
@@ -81,14 +82,14 @@ defmodule PipeLine.Relay.Tracker do
 
   def handle_info({:rescind_update, channel_id, delta}, map) do
     response = do_update(channel_id, -delta, map)
-    Logger.info("untracked activity on channel #{channel_id}")
+    Logger.debug("untracked activity on channel #{channel_id}")
     response
   end
 
   def handle_cast({:update, channel_id, delta}, map) do
     response = do_update(channel_id, delta, map)
     Process.send_after(self(), {:rescind_update, channel_id, delta}, @activity_decay)
-    Logger.info("tracked activity on channel #{channel_id}")
+    Logger.debug("tracked activity on channel #{channel_id}")
     response
   end
 
