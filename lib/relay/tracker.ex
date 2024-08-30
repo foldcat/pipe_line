@@ -101,7 +101,7 @@ defmodule PipeLine.Relay.Tracker do
   def get_merged_channel_list(channels),
     do: GenServer.call(__MODULE__, {:get_merged_list, channels})
 
-  @spec update_channel(channel_id :: String.t(), delta :: Integer) :: :ok
+  @spec update_channel(channel_id :: String.t(), delta :: integer) :: :ok
   def update_channel(channel_id, delta) do
     GenServer.cast(__MODULE__, {:update, channel_id, delta})
     :ok
