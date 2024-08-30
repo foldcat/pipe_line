@@ -21,6 +21,7 @@ defmodule PipeLine.Relay.Core do
   alias PipeLine.Commands.Ban
   alias PipeLine.Relay.Censor
   alias PipeLine.Relay.RelayCache
+  alias PipeLine.Relay.Tracker
   alias PipeLine.Relay.Webhook
   require Logger
   import IO.ANSI
@@ -106,8 +107,19 @@ defmodule PipeLine.Relay.Core do
 
     reply_format = format_reply(msg)
 
+    _ = Tracker.update_channel("#{from_channel}", 1)
+    Logger.info("cache result: #{inspect(cache_lookup |> Enum.map(fn {item} -> item end))}")
+    Logger.info("flat? #{inspect(cache_lookup |> Enum.map(fn {item} -> item end) |> Tracker.get_merged_channel_list() )}")
+
+    Logger.info(
+      "merged channel list: #{inspect(cache_lookup |> Tracker.get_merged_channel_list())}"
+    )
+
     webhook_ids =
-      Enum.map(cache_lookup, fn {chanid} ->
+      cache_lookup
+      |> Enum.map(fn {item} -> item end)
+      |> Tracker.get_merged_channel_list()
+      |> Enum.map(fn chanid ->
         # do not relay message back to the original channel
         if chanid == from_channel do
           nil
